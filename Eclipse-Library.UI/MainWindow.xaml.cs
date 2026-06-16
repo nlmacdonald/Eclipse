@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using Eclipse_Library;
@@ -29,6 +28,7 @@ namespace Eclipse_Library.UI
         private readonly ObservableCollection<AlignmentDefinition> _alignments = new();
         private readonly ObservableCollection<string> _knownLanguages = new();
         private readonly ObservableCollection<RaceAbilityDisplayRow> _racialAbilityRows = new();
+        private readonly CharacterBuildDocumentStore _characterBuildDocumentStore = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -230,7 +230,7 @@ namespace Eclipse_Library.UI
 
             var document = CreateCharacterBuildDocumentFromUi();
 
-            File.WriteAllText(path, JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
+            _characterBuildDocumentStore.Save(path, document);
             _currentCharacterFilePath = path;
             SetStatus($"Saved character: {path}");
         }
@@ -293,7 +293,7 @@ namespace Eclipse_Library.UI
             CharacterBuildDocument? document;
             try
             {
-                document = JsonSerializer.Deserialize<CharacterBuildDocument>(File.ReadAllText(path));
+                document = _characterBuildDocumentStore.Load(path);
             }
             catch (Exception ex)
             {
@@ -302,13 +302,6 @@ namespace Eclipse_Library.UI
                 return;
             }
 
-            if (document is null)
-            {
-                SetStatus("Could not open character: file was empty.");
-                return;
-            }
-
-            document.NormalizeCollections();
             ApplyCharacterBuildDocumentToUi(document);
             _currentCharacterFilePath = path;
             RefreshCharacterBuild();
