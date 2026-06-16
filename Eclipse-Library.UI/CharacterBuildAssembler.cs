@@ -26,6 +26,18 @@ namespace Eclipse_Library.UI
                     levelAbilityScoreAdjustments),
                 buildLevel);
 
+            foreach (var row in classLevels.OrderBy(x => x.CharacterLevel))
+            {
+                build.AddPurchase(
+                    row.CharacterLevel,
+                    new SetClassLevelDetailsPurchase(
+                        row.CharacterLevel,
+                        row.TemplateName,
+                        row.HpNote,
+                        row.FavoredBonus,
+                        row.MaxHitPoints > 0 ? row.MaxHitPoints : null));
+            }
+
             foreach (var row in classLevels
                 .SelectMany(x => x.Purchases)
                 .OrderBy(x => x.Level))

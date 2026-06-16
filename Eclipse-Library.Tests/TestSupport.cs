@@ -17,6 +17,7 @@ internal static class TestReplayerFactory
         var finalValidators = new IFinalBuildValidator[]
         {
             new CpOverspendFinalValidator(),
+            new ClassLevelDetailsValidator(),
             new SelectedFeatAllowanceValidator(rulesConfig.LevelProgression),
             new SkillPointAllowanceValidator(rulesConfig.Skills),
         };

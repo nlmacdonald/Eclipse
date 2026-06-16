@@ -75,4 +75,84 @@ public sealed class BuildValidationTests
 
         Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"));
     }
+
+    [TestMethod]
+    public void ClassLevelDetailsPurchaseUpdatesLevelRecordsAndFavoredSkillPoints()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("Class Detail Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Wizard", "4", "+1 Skill Point", maxHitPoints: 4));
+        build.AddPurchase(1, new AllocateSkillRanksPurchase("Spellcraft", 1, isRelevantSkill: true, rankMultiplier: 1m));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"));
+        Assert.AreEqual("Wizard", result.Character.LevelRecords[0].TemplateName);
+        Assert.AreEqual("4", result.Character.LevelRecords[0].HpNote);
+        Assert.AreEqual("+1 Skill Point", result.Character.LevelRecords[0].FavoredBonus);
+        Assert.AreEqual(1, result.Character.BonusSkillPoints);
+    }
+
+    [TestMethod]
+    public void ReportsMissingClassLevelHitPoints()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("Missing HP Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Fighter", "", "+1 Hit Point", maxHitPoints: 10));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Diagnostics.Any(x => x.Code == "CLASS_LEVEL_HP_MISSING"));
+        Assert.IsTrue(result.Diagnostics.Any(x => x.Context?.ValidatorId == "CLASS_LEVEL_DETAILS"));
+    }
+
+    [TestMethod]
+    public void ReportsOutOfRangeClassLevelHitPoints()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("HP Range Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Wizard", "9", "+1 Hit Point", maxHitPoints: 4));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Diagnostics.Any(x => x.Code == "CLASS_LEVEL_HP_OUT_OF_RANGE"));
+    }
+
+    [TestMethod]
+    public void ReportsInvalidFavoredClassBonus()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Rogue", "6", "Sneaky", maxHitPoints: 6));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsTrue(result.HasErrors);
+        Assert.IsTrue(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_INVALID"));
+    }
+
+    [TestMethod]
+    public void AcceptsCustomFavoredClassBonusNote()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("Custom Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Rogue", "6", "Custom: alternate racial bonus", maxHitPoints: 6));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_INVALID"));
+        Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "CLASS_LEVEL_HP_OUT_OF_RANGE"));
+    }
 }

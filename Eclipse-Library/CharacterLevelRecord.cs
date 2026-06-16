@@ -4,7 +4,7 @@ namespace Eclipse_Library
 {
     public readonly struct CharacterLevelRecord
     {
-        public CharacterLevelRecord(int level, string templateName, string? hpNote = null)
+        public CharacterLevelRecord(int level, string templateName, string? hpNote = null, string? favoredBonus = null)
         {
             if (level < 1)
             {
@@ -19,17 +19,21 @@ namespace Eclipse_Library
             Level = level;
             TemplateName = templateName.Trim();
             HpNote = hpNote ?? "";
+            FavoredBonus = favoredBonus ?? "";
         }
 
         public int Level { get; }
         public string TemplateName { get; }
         public string HpNote { get; }
+        public string FavoredBonus { get; }
 
         public CharacterLevelRecord WithTemplateName(string templateName) =>
-            new(Level, templateName, HpNote);
+            new(Level, templateName, HpNote, FavoredBonus);
 
         public CharacterLevelRecord WithHpNote(string hpNote) =>
-            new(Level, TemplateName, hpNote);
+            new(Level, TemplateName, hpNote, FavoredBonus);
+
+        public CharacterLevelRecord WithFavoredBonus(string favoredBonus) =>
+            new(Level, TemplateName, HpNote, favoredBonus);
     }
 }
-

@@ -391,6 +391,17 @@ namespace Eclipse_Library
             _levelRecords[level - 1] = _levelRecords[level - 1].WithHpNote(hpNote ?? "");
         }
 
+        public void SetFavoredBonusForLevel(int level, string favoredBonus)
+        {
+            if (level < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(level), level, "Level must be >= 1.");
+            }
+
+            EnsureLevelRecords(level);
+            _levelRecords[level - 1] = _levelRecords[level - 1].WithFavoredBonus(favoredBonus ?? "");
+        }
+
         public void SpendCp(int amount)
         {
             if (amount < 0)
@@ -833,6 +844,9 @@ namespace Eclipse_Library
             copy._knownSpells.AddRange(_knownSpells);
             copy._limitedSaveBonuses.AddRange(_limitedSaveBonuses.Select(x => new LimitedSaveBonus(x.SaveType, x.Bonus, x.Limitation)));
             copy._statBlockNotes.AddRange(_statBlockNotes);
+
+            copy._levelRecords.Clear();
+            copy._levelRecords.AddRange(_levelRecords);
 
             foreach (var entry in _abilityScoreContributions)
             {
