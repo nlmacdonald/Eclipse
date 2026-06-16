@@ -29,6 +29,7 @@ namespace Eclipse_Library.UI
         private readonly ObservableCollection<string> _knownLanguages = new();
         private readonly ObservableCollection<RaceAbilityDisplayRow> _racialAbilityRows = new();
         private readonly CharacterBuildDocumentStore _characterBuildDocumentStore = new();
+        private readonly StatBlockFormatter _statBlockFormatter = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -3314,7 +3315,13 @@ namespace Eclipse_Library.UI
                 ApplyLevelAbilityScoreAdjustments(_lastCalculatedCharacter, inputs.TargetLevel);
                 DiagnosticsListBox.ItemsSource = null;
                 ClassesSummaryText.Text = "No class levels added.";
-                StatBlockTextBox.Text = BuildEmptyStatBlock(inputs, _lastCalculatedCharacter, _selectedFeats, _skillRows);
+                StatBlockTextBox.Text = _statBlockFormatter.BuildEmpty(
+                    inputs,
+                    _lastCalculatedCharacter,
+                    PlayerNameTextBox.Text.Trim(),
+                    RulesetProfile.Get(_heroSettings.RulesetId).DisplayName,
+                    _selectedFeats,
+                    _skillRows);
                 RefreshAbilityScoreModifiers();
                 RefreshDerivedCombatAndSaves();
                 RefreshClassDetailTabs();
@@ -3350,7 +3357,7 @@ namespace Eclipse_Library.UI
                     new BuildReplayOptions { RunIncrementalValidation = true, RunFinalValidation = true },
                     rulesConfig);
 
-                StatBlockTextBox.Text = BuildStatBlock(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
+                StatBlockTextBox.Text = _statBlockFormatter.Build(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
                 _lastCalculatedCharacter = result.Character;
                 DiagnosticsListBox.ItemsSource = result.Diagnostics
                     .Select(x => $"[{x.Severity}] {x.Code}: {x.Message}")
@@ -3395,34 +3402,6 @@ namespace Eclipse_Library.UI
                     isRelevantSkill: skill.RankMultiplier >= 1m,
                     rankMultiplier: skill.RankMultiplier);
             }
-        }
-
-        private string BuildEmptyStatBlock(
-            CharacterInputs inputs,
-            Character character,
-            IEnumerable<SelectedFeatRow>? feats = null,
-            IEnumerable<SkillAllocationRow>? skills = null)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine(inputs.Name);
-            sb.AppendLine($"Player: {PlayerNameTextBox.Text.Trim()}");
-            sb.AppendLine($"Ruleset: {RulesetProfile.Get(_heroSettings.RulesetId).DisplayName}");
-            sb.AppendLine($"Target Level: {inputs.TargetLevel}");
-            sb.AppendLine($"Race: {inputs.Race}");
-            sb.AppendLine($"Size: {character.Size}");
-            sb.AppendLine();
-            sb.AppendLine("Ability Scores");
-            sb.AppendLine(FormatAbilityScoreLine(character, "Strength", "Str"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Dexterity", "Dex"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Constitution", "Con"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Intelligence", "Int"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Wisdom", "Wis"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Charisma", "Cha"));
-            AppendFeatLines(sb, feats);
-            AppendSkillLines(sb, skills);
-            sb.AppendLine();
-            sb.AppendLine("Add a class level to begin building this hero.");
-            return sb.ToString();
         }
 
         private void RefreshClassesSummary()
@@ -3882,175 +3861,6 @@ namespace Eclipse_Library.UI
             return new BuildReplayer(stepValidators, finalValidators);
         }
 
-        private static string BuildStatBlock(
-            CharacterBuildResult result,
-            CharacterInputs inputs,
-            CharacterTemplateDefinition template,
-            IEnumerable<CharacterClassLevelRow>? classLevels = null,
-            IEnumerable<SelectedFeatRow>? feats = null,
-            IEnumerable<SkillAllocationRow>? skills = null)
-        {
-            var character = result.Character;
-            var levels = classLevels?.ToList() ?? new List<CharacterClassLevelRow>();
-            var sb = new StringBuilder();
-            sb.AppendLine(character.Name);
-            sb.AppendLine($"Level {character.Level}");
-            if (levels.Count > 0)
-            {
-                sb.AppendLine("Classes: " + string.Join(", ", levels.GroupBy(x => x.TemplateName).Select(x => $"{x.Key} {x.Count()}")));
-            }
-            else
-            {
-                sb.AppendLine($"Template: {template.Name} ({template.Id})");
-            }
-
-            sb.AppendLine($"Ruleset: {template.Ruleset.DisplayName}");
-            sb.AppendLine($"Race: {inputs.Race}");
-            sb.AppendLine($"Size: {inputs.Size}");
-            sb.AppendLine($"Alignment: {inputs.Alignment}");
-            if (!string.IsNullOrWhiteSpace(inputs.Deity))
-            {
-                sb.AppendLine($"Deity: {inputs.Deity}");
-            }
-
-            sb.AppendLine($"HP {inputs.HitPoints}; Starting Gold {inputs.StartingGold}");
-            sb.AppendLine($"Languages: {(inputs.Languages.Count == 0 ? "None" : string.Join(", ", inputs.Languages))}");
-            sb.AppendLine();
-            sb.AppendLine("Ability Scores");
-            var abilityScores = character.AbilityScores;
-            sb.AppendLine(FormatAbilityScoreLine(character, "Strength", "Str"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Dexterity", "Dex"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Constitution", "Con"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Intelligence", "Int"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Wisdom", "Wis"));
-            sb.AppendLine(FormatAbilityScoreLine(character, "Charisma", "Cha"));
-
-            if (character.MovementSpeeds.Count > 0)
-            {
-                sb.AppendLine("Speed: " + string.Join(", ", character.MovementSpeeds.OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Value} ft.")));
-            }
-
-            if (character.SenseRanges.Count > 0)
-            {
-                sb.AppendLine("Senses: " + string.Join(", ", character.SenseRanges.OrderBy(x => x.Key).Select(x => x.Value == 0 ? x.Key : $"{x.Key} {x.Value} ft.")));
-            }
-
-            if (character.StatBlockNotes.Count > 0)
-            {
-                foreach (var note in character.StatBlockNotes)
-                {
-                    sb.AppendLine(note);
-                }
-            }
-
-            sb.AppendLine();
-            sb.AppendLine("Combat");
-            var size = character.SizeProfile;
-            var strengthMod = AbilityScores.GetModifier(abilityScores.Strength);
-            var dexterityMod = AbilityScores.GetModifier(abilityScores.Dexterity);
-            sb.AppendLine($"BAB (Warcraft): {FormatSigned(character.Warcraft + size.AcAttackModifier)}");
-            sb.AppendLine($"Melee BAB: {FormatSigned(character.Warcraft + strengthMod + size.AcAttackModifier)}");
-            sb.AppendLine($"Ranged BAB: {FormatSigned(character.Warcraft + dexterityMod + size.AcAttackModifier)}");
-            sb.AppendLine($"AC: {10 + dexterityMod + size.AcAttackModifier}");
-            sb.AppendLine($"Grapple: {FormatSigned(character.Warcraft + strengthMod + size.GrappleModifier)}");
-            sb.AppendLine($"Space/Reach: {size.Space}/{size.Reach}");
-            sb.AppendLine($"Size Modifiers: AC/Attack {FormatSigned(size.AcAttackModifier)}, Grapple {FormatSigned(size.GrappleModifier)}, Hide/Stealth {FormatSigned(size.HideModifier)}");
-            sb.AppendLine();
-            sb.AppendLine("Saves");
-            sb.AppendLine($"Fortitude: {FormatSigned(GetSaveTotal(character, SaveType.Fortitude, AbilityScores.GetModifier(abilityScores.Constitution)))}");
-            sb.AppendLine($"Reflex: {FormatSigned(GetSaveTotal(character, SaveType.Reflex, AbilityScores.GetModifier(abilityScores.Dexterity)))}");
-            sb.AppendLine($"Will: {FormatSigned(GetSaveTotal(character, SaveType.Will, AbilityScores.GetModifier(abilityScores.Wisdom)))}");
-            AppendFeatLines(sb, feats);
-            AppendSkillLines(sb, skills);
-            sb.AppendLine();
-            sb.AppendLine(character.GetSummary());
-            sb.AppendLine();
-            sb.AppendLine("Hit Dice By Level");
-            for (var level = 1; level <= character.Level; level++)
-            {
-                var hitDice = character.GetHitDiceForLevel(level);
-                var secondary = hitDice.Secondary is null ? "" : $", second {hitDice.Secondary}";
-                var classLevel = levels.FirstOrDefault(x => x.CharacterLevel == level);
-                var classText = classLevel is null ? "" : $" ({classLevel.DisplayName})";
-                sb.AppendLine($"L{level}: {hitDice.Primary}{secondary}{classText}");
-            }
-
-            sb.AppendLine();
-            sb.AppendLine("Purchased Abilities");
-            if (character.PurchasedAbilities.Count == 0)
-            {
-                sb.AppendLine("None");
-            }
-            else
-            {
-                foreach (var ability in character.PurchasedAbilities)
-                {
-                    var options = ability.SelectedOptions.Count == 0
-                        ? ""
-                        : $" [{string.Join(", ", ability.SelectedOptions.Select(x => x.Name))}]";
-                    sb.AppendLine($"{ability.Definition.Name}{options}: {ability.CostCp} CP");
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        private static void AppendFeatLines(StringBuilder sb, IEnumerable<SelectedFeatRow>? feats)
-        {
-            var selectedFeats = (feats ?? Enumerable.Empty<SelectedFeatRow>())
-                .Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Count > 0)
-                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (selectedFeats.Count == 0)
-            {
-                return;
-            }
-
-            sb.AppendLine();
-            sb.AppendLine("Feats");
-            foreach (var feat in selectedFeats)
-            {
-                var count = feat.Count > 1 ? $" x{feat.Count}" : "";
-                sb.AppendLine($"{feat.Name}{count}");
-            }
-        }
-
-        private static void AppendSkillLines(StringBuilder sb, IEnumerable<SkillAllocationRow>? skills)
-        {
-            var allocatedSkills = (skills ?? Enumerable.Empty<SkillAllocationRow>())
-                .Where(x => x.SkillPointsSpent > 0)
-                .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (allocatedSkills.Count == 0)
-            {
-                return;
-            }
-
-            sb.AppendLine();
-            sb.AppendLine("Skills");
-            foreach (var skill in allocatedSkills)
-            {
-                sb.AppendLine($"{skill.DisplayName} {skill.TotalModifierText} ({skill.RanksText} rank{(skill.Ranks == 1m ? "" : "s")}, {skill.AttributeShort}, {skill.SkillPointsSpent} SP)");
-            }
-        }
-
-        private static int GetSaveTotal(Character character, SaveType saveType, int abilityModifier)
-        {
-            return character.SaveBonuses.TryGetValue(saveType, out var baseSave)
-                ? baseSave + abilityModifier
-                : abilityModifier;
-        }
-
-        private static string FormatAbilityScoreLine(Character character, string ability, string abbreviation)
-        {
-            var breakdown = character.GetAbilityScoreBreakdown(ability);
-            var pieces = new List<string> { $"base {breakdown.BaseScore}" };
-            pieces.AddRange(breakdown.Contributions.Select(FormatAbilityScoreContributionInline));
-            return $"{abbreviation} {breakdown.Total} ({string.Join(", ", pieces)}; mod {FormatSigned(breakdown.Modifier)})";
-        }
-
         private void ApplyLevelAbilityScoreAdjustments(Character character, int targetLevel)
         {
             var maxAdjustments = targetLevel / 4;
@@ -4077,11 +3887,6 @@ namespace Eclipse_Library.UI
         private static string FormatBonusType(BonusType type)
         {
             return type == BonusType.Untyped ? "untyped bonus" : $"{type.ToString().ToLowerInvariant()} bonus";
-        }
-
-        private static string FormatAbilityScoreContributionInline(AbilityScoreContribution contribution)
-        {
-            return $"{FormatSigned(contribution.Amount)} {FormatContributionKind(contribution)} from {contribution.Source}";
         }
 
         private static string FormatAbilityScoreContributionTooltipLine(AbilityScoreContribution contribution)
