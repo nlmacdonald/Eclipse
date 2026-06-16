@@ -30,6 +30,7 @@ namespace Eclipse_Library.UI
         private readonly ObservableCollection<RaceAbilityDisplayRow> _racialAbilityRows = new();
         private readonly CharacterBuildDocumentStore _characterBuildDocumentStore = new();
         private readonly StatBlockFormatter _statBlockFormatter = new();
+        private readonly CharacterBuildReplayFactory _buildReplayFactory = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -3350,12 +3351,8 @@ namespace Eclipse_Library.UI
                     build.AddPurchase(buildLevel, purchase);
                 }
 
-                var rulesConfig = CreateBuildRulesConfigFromHeroSettings();
-                var result = CreateReplayer(rulesConfig).Replay(
-                    build,
-                    new EclipseCpProgression(),
-                    new BuildReplayOptions { RunIncrementalValidation = true, RunFinalValidation = true },
-                    rulesConfig);
+                var rulesConfig = _buildReplayFactory.CreateRulesConfig(_heroSettings);
+                var result = _buildReplayFactory.Replay(build, rulesConfig);
 
                 StatBlockTextBox.Text = _statBlockFormatter.Build(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
                 _lastCalculatedCharacter = result.Character;
@@ -3808,57 +3805,6 @@ namespace Eclipse_Library.UI
             var bonus = perLevel * Math.Max(0, level - 1);
             bonus += perLevel * 4; // level 1 multiplier
             return bonus;
-        }
-
-        private BuildRulesConfig CreateBuildRulesConfigFromHeroSettings()
-        {
-            var config = RulesetProfile.Get(_heroSettings.RulesetId).CreateBuildRulesConfig();
-
-            config.Skills.EnableIrrelevantToRelevantPromotion = ! _heroSettings.SuppressIrrelevantSkillPromotion
-                && config.Skills.EnableIrrelevantToRelevantPromotion;
-            config.Skills.UseFirstCharacterLevelSkillPointMultiplier = _heroSettings.UseFirstCharacterLevelSkillPointMultiplier;
-
-            switch (_heroSettings.SkillRankCapMode)
-            {
-                case "Character level +2":
-                    config.Skills.SkillRankCapBonus = 2;
-                    break;
-                case "Character level +5":
-                    config.Skills.SkillRankCapBonus = 5;
-                    break;
-                case "Character level +10":
-                    config.Skills.SkillRankCapBonus = 10;
-                    break;
-                case "Unlimited":
-                    config.Skills.UnlimitedSkillRankCap = true;
-                    break;
-            }
-
-            return config;
-        }
-
-        private static BuildReplayer CreateReplayer(BuildRulesConfig? rulesConfig = null)
-        {
-            rulesConfig ??= new BuildRulesConfig();
-            var stepValidators = new IBuildStepValidator[]
-            {
-                new WarcraftCapByLevelValidator(),
-                new SkillRankCapByLevelValidator(rulesConfig.Skills),
-                new BaseCasterLevelCapByLevelValidator(),
-                new MagicLevelsPerProgressionPerLevelValidator(),
-                new MagicLevelCapByCharacterLevelValidator(),
-                new CpOverspendByLevelValidator(),
-                new SkillSpecialtyValidator(rulesConfig.Skills),
-                new RuleValidatorBuildStepAdapter(new AbilityPrerequisiteValidator()),
-            };
-
-            var finalValidators = new IFinalBuildValidator[]
-            {
-                new CpOverspendFinalValidator(),
-                new RuleValidatorFinalAdapter(new AbilityPrerequisiteValidator()),
-            };
-
-            return new BuildReplayer(stepValidators, finalValidators);
         }
 
         private void ApplyLevelAbilityScoreAdjustments(Character character, int targetLevel)
