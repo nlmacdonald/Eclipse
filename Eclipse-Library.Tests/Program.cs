@@ -9,6 +9,9 @@ var tests = new (string Name, Action Run)[]
     ("Builder choice purchases update character state without CP spend", BuilderChoicePurchasesUpdateCharacterState),
     ("BuildReplayer applies purchases and builder choices", BuildReplayerAppliesPurchasesAndBuilderChoices),
     ("BuildReplayer reports CP overspend diagnostics", BuildReplayerReportsCpOverspendDiagnostics),
+    ("BuildReplayer advances levels with CP progression", BuildReplayerAdvancesLevelsWithCpProgression),
+    ("BuildReplayer reports skill rank cap diagnostics", BuildReplayerReportsSkillRankCapDiagnostics),
+    ("BuildReplayer records failed purchases and continues", BuildReplayerRecordsFailedPurchasesAndContinues),
 };
 
 var failures = new List<string>();
@@ -221,6 +224,61 @@ static void BuildReplayerReportsCpOverspendDiagnostics()
     AssertEqual(true, result.Diagnostics.Any(x => x.Context?.Stage == BuildDiagnosticStage.Final), "Final diagnostic present");
 }
 
+static void BuildReplayerAdvancesLevelsWithCpProgression()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Level Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 2);
+
+    build.AddPurchase(2, new BuyWarcraftPurchase(1));
+
+    var result = CreateStandardReplayer().Replay(build, cpProgression: new TableCpProgression(new Dictionary<int, int>
+    {
+        [1] = 24,
+        [2] = 48,
+    }));
+
+    AssertEqual(false, result.HasErrors, "HasErrors");
+    AssertEqual(2, result.Character.Level, "Level");
+    AssertEqual(48, result.Character.TotalCp, "TotalCp");
+    AssertEqual(1, result.Character.Warcraft, "Warcraft");
+    AssertEqual(true, result.AppliedPurchases.Any(x => x.SourceLevel == 2 && x.Success), "Level 2 purchase applied");
+}
+
+static void BuildReplayerReportsSkillRankCapDiagnostics()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Skill Cap Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new AllocateSkillRanksPurchase("Perception", 5, isRelevantSkill: true, rankMultiplier: 1m));
+
+    var result = CreateStandardReplayer().Replay(build);
+
+    AssertEqual(true, result.HasErrors, "HasErrors");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Code == "SKILL_CAP_EXCEEDED"), "SKILL_CAP_EXCEEDED diagnostic present");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Context?.ValidatorId == "SKILL_RANK_CAP_BY_LEVEL"), "Skill cap validator id present");
+}
+
+static void BuildReplayerRecordsFailedPurchasesAndContinues()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Failure Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new FailingPurchase("broken purchase"));
+    build.AddPurchase(1, new SelectFeatPurchase("Dodge"));
+
+    var result = CreateStandardReplayer().Replay(build);
+
+    AssertEqual(true, result.HasErrors, "HasErrors");
+    AssertEqual(2, result.AppliedPurchases.Count, "AppliedPurchases.Count");
+    AssertEqual(false, result.AppliedPurchases[0].Success, "First purchase success");
+    AssertEqual(true, result.AppliedPurchases[1].Success, "Second purchase success");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Code == "ENGINE_APPLY_FAILED"), "ENGINE_APPLY_FAILED diagnostic present");
+    AssertEqual(1, result.Character.SelectedFeats["Dodge"], "SelectedFeats[Dodge]");
+}
+
 static BuildReplayer CreateStandardReplayer()
 {
     var rulesConfig = new BuildRulesConfig();
@@ -267,5 +325,37 @@ sealed class FixedCpProgression : ICpProgression
     public int GetTotalCpAtLevel(int level)
     {
         return _totalCp;
+    }
+}
+
+sealed class TableCpProgression : ICpProgression
+{
+    private readonly IReadOnlyDictionary<int, int> _totalsByLevel;
+
+    public TableCpProgression(IReadOnlyDictionary<int, int> totalsByLevel)
+    {
+        _totalsByLevel = totalsByLevel;
+    }
+
+    public int GetTotalCpAtLevel(int level)
+    {
+        return _totalsByLevel.TryGetValue(level, out var total)
+            ? total
+            : _totalsByLevel.Values.LastOrDefault();
+    }
+}
+
+sealed class FailingPurchase : IPurchase
+{
+    public FailingPurchase(string description)
+    {
+        Description = description;
+    }
+
+    public string Description { get; }
+
+    public void Apply(Character character)
+    {
+        throw new InvalidOperationException("Intentional test failure.");
     }
 }
