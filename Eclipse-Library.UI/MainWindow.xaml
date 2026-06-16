@@ -857,8 +857,28 @@
                                  VerticalScrollBarVisibility="Auto"
                                  IsReadOnly="True" />
 
-                        <TextBlock Grid.Row="2" FontSize="18" FontWeight="SemiBold" Text="Diagnostics" Margin="0,12,0,8" />
-                        <ListBox Grid.Row="3" x:Name="DiagnosticsListBox" />
+                        <DockPanel Grid.Row="2" Margin="0,12,0,8">
+                            <TextBlock FontSize="18" FontWeight="SemiBold" Text="Diagnostics" />
+                            <TextBlock DockPanel.Dock="Right"
+                                       x:Name="DiagnosticsSummaryText"
+                                       Foreground="#697A8A"
+                                       HorizontalAlignment="Right" />
+                        </DockPanel>
+                        <DataGrid Grid.Row="3"
+                                  x:Name="DiagnosticsGrid"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="76" />
+                                <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="54" />
+                                <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="150" />
+                                <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="150" />
+                                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </Grid>
             </TabItem>

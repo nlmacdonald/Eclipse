@@ -28,6 +28,7 @@ namespace Eclipse_Library.UI
         private readonly ObservableCollection<AlignmentDefinition> _alignments = new();
         private readonly ObservableCollection<string> _knownLanguages = new();
         private readonly ObservableCollection<RaceAbilityDisplayRow> _racialAbilityRows = new();
+        private readonly ObservableCollection<BuildDiagnosticDisplayRow> _diagnostics = new();
         private readonly CharacterBuildDocumentStore _characterBuildDocumentStore = new();
         private readonly StatBlockFormatter _statBlockFormatter = new();
         private readonly CharacterBuildReplayFactory _buildReplayFactory = new();
@@ -73,6 +74,7 @@ namespace Eclipse_Library.UI
         public MainWindow()
         {
             InitializeComponent();
+            DiagnosticsGrid.ItemsSource = _diagnostics;
             _includedTemplateSources = new HashSet<string>(_heroSettings.IncludedSources, StringComparer.OrdinalIgnoreCase);
             _currentTemplate.RulesetId = _heroSettings.RulesetId;
             InitializeLists();
@@ -532,7 +534,7 @@ namespace Eclipse_Library.UI
             _classLevels.Clear();
             _levelAbilityScoreAdjustments.Clear();
             RefreshAbilityScoreAdjustmentsSummary();
-            DiagnosticsListBox.ItemsSource = null;
+            SetDiagnostics(Array.Empty<BuildDiagnostic>());
             _lastCalculatedCharacter = null;
             RefreshClassDetailTabs();
         }
@@ -2429,7 +2431,7 @@ namespace Eclipse_Library.UI
             ResetCharacterBuild();
             RefreshAbilityScoreModifiers();
             RefreshLevelDependentSummaries();
-            DiagnosticsListBox.ItemsSource = null;
+            SetDiagnostics(Array.Empty<BuildDiagnostic>());
             StatBlockTextBox.Text = "";
             _lastCalculatedCharacter = null;
             RefreshDerivedCombatAndSaves();
@@ -3179,6 +3181,14 @@ namespace Eclipse_Library.UI
             if (!TryReadCharacterInputs(out var inputs, quiet: true))
             {
                 StatBlockTextBox.Text = "Complete the character fields to calculate a statblock.";
+                SetDiagnostics(new[]
+                {
+                    new BuildDiagnostic(
+                        BuildDiagnosticSeverity.Warning,
+                        "CHARACTER_INPUT_INCOMPLETE",
+                        "Complete the character fields to calculate replay diagnostics.",
+                        new BuildDiagnosticContext(BuildDiagnosticStage.Final, 1)),
+                });
                 return;
             }
 
@@ -3193,7 +3203,7 @@ namespace Eclipse_Library.UI
                     race: selectedRace,
                     raceAbilityCatalog: _raceAbilityCatalog);
                 ApplyLevelAbilityScoreAdjustments(_lastCalculatedCharacter, inputs.TargetLevel);
-                DiagnosticsListBox.ItemsSource = null;
+                SetDiagnostics(Array.Empty<BuildDiagnostic>());
                 ClassesSummaryText.Text = "No class levels added.";
                 StatBlockTextBox.Text = _statBlockFormatter.BuildEmpty(
                     inputs,
@@ -3230,9 +3240,7 @@ namespace Eclipse_Library.UI
 
                 StatBlockTextBox.Text = _statBlockFormatter.Build(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
                 _lastCalculatedCharacter = result.Character;
-                DiagnosticsListBox.ItemsSource = result.Diagnostics
-                    .Select(x => $"[{x.Severity}] {x.Code}: {x.Message}")
-                    .ToList();
+                SetDiagnostics(result.Diagnostics);
 
                 RefreshClassesSummary();
                 RefreshAbilityScoreModifiers();
@@ -3251,11 +3259,43 @@ namespace Eclipse_Library.UI
             catch (Exception ex)
             {
                 StatBlockTextBox.Text = $"Could not calculate character: {ex.Message}";
+                SetDiagnostics(new[]
+                {
+                    new BuildDiagnostic(
+                        BuildDiagnosticSeverity.Error,
+                        "BUILD_REFRESH_FAILED",
+                        ex.Message,
+                        new BuildDiagnosticContext(BuildDiagnosticStage.Final, GetEffectiveCharacterLevel())),
+                });
                 if (showStatus)
                 {
                     SetStatus($"Could not calculate character: {ex.Message}");
                 }
             }
+        }
+
+        private void SetDiagnostics(IEnumerable<BuildDiagnostic> diagnostics)
+        {
+            _diagnostics.Clear();
+            foreach (var diagnostic in diagnostics ?? Enumerable.Empty<BuildDiagnostic>())
+            {
+                _diagnostics.Add(new BuildDiagnosticDisplayRow(diagnostic));
+            }
+
+            if (DiagnosticsSummaryText is null)
+            {
+                return;
+            }
+
+            if (_diagnostics.Count == 0)
+            {
+                DiagnosticsSummaryText.Text = "No issues";
+                return;
+            }
+
+            var errors = _diagnostics.Count(x => x.Severity == BuildDiagnosticSeverity.Error.ToString());
+            var warnings = _diagnostics.Count(x => x.Severity == BuildDiagnosticSeverity.Warning.ToString());
+            DiagnosticsSummaryText.Text = $"{errors} error(s), {warnings} warning(s)";
         }
 
         private void RefreshClassesSummary()
