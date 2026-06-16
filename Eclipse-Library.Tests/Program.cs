@@ -7,6 +7,8 @@ var tests = new (string Name, Action Run)[]
     ("CharacterBuildDocument loads old saves without new state", CharacterBuildDocumentLoadsOldSaveShape),
     ("CharacterBuildDocument tolerates null optional collections", CharacterBuildDocumentToleratesNullCollections),
     ("Builder choice purchases update character state without CP spend", BuilderChoicePurchasesUpdateCharacterState),
+    ("BuildReplayer applies purchases and builder choices", BuildReplayerAppliesPurchasesAndBuilderChoices),
+    ("BuildReplayer reports CP overspend diagnostics", BuildReplayerReportsCpOverspendDiagnostics),
 };
 
 var failures = new List<string>();
@@ -184,6 +186,59 @@ static void BuilderChoicePurchasesUpdateCharacterState()
     AssertEqual(3, character.Skills["Knowledge (arcana)"].CpInvested, "Knowledge (arcana) skill points invested");
 }
 
+static void BuildReplayerAppliesPurchasesAndBuilderChoices()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Replay Test", new AbilityScores(10, 10, 10, 14, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new BuyWarcraftPurchase(1));
+    build.AddPurchase(1, new SelectFeatPurchase("Combat Casting"));
+    build.AddPurchase(1, new AllocateSkillRanksPurchase("Spellcraft", 4, isRelevantSkill: true, rankMultiplier: 1m));
+
+    var result = CreateStandardReplayer().Replay(build);
+
+    AssertEqual(false, result.HasErrors, "HasErrors");
+    AssertEqual(1, result.Character.Warcraft, "Warcraft");
+    AssertEqual(1, result.Character.SelectedFeats["Combat Casting"], "SelectedFeats[Combat Casting]");
+    AssertEqual(4m, result.Character.GetSkillRanks("Spellcraft"), "Spellcraft ranks");
+    AssertEqual(4, result.Character.Skills["Spellcraft"].CpInvested, "Spellcraft invested");
+}
+
+static void BuildReplayerReportsCpOverspendDiagnostics()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Overspend Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new BuyBonusFeatPurchase(count: 5));
+
+    var result = CreateStandardReplayer().Replay(build, cpProgression: new FixedCpProgression(totalCp: 6));
+
+    AssertEqual(true, result.HasErrors, "HasErrors");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Code == "CP_OVERSPENT"), "CP_OVERSPENT diagnostic present");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Context?.Stage == BuildDiagnosticStage.AtLevel), "AtLevel diagnostic present");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Context?.Stage == BuildDiagnosticStage.Final), "Final diagnostic present");
+}
+
+static BuildReplayer CreateStandardReplayer()
+{
+    var rulesConfig = new BuildRulesConfig();
+    var stepValidators = new IBuildStepValidator[]
+    {
+        new WarcraftCapByLevelValidator(),
+        new SkillRankCapByLevelValidator(rulesConfig.Skills),
+        new CpOverspendByLevelValidator(),
+    };
+
+    var finalValidators = new IFinalBuildValidator[]
+    {
+        new CpOverspendFinalValidator(),
+    };
+
+    return new BuildReplayer(stepValidators, finalValidators);
+}
+
 static void AssertEqual<T>(T expected, T actual, string label)
 {
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
@@ -197,5 +252,20 @@ static void AssertNotNull(object? value, string label)
     if (value is null)
     {
         throw new InvalidOperationException($"{label}: expected non-null value.");
+    }
+}
+
+sealed class FixedCpProgression : ICpProgression
+{
+    private readonly int _totalCp;
+
+    public FixedCpProgression(int totalCp)
+    {
+        _totalCp = totalCp;
+    }
+
+    public int GetTotalCpAtLevel(int level)
+    {
+        return _totalCp;
     }
 }
