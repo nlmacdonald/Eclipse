@@ -31,6 +31,7 @@ namespace Eclipse_Library.UI
         private readonly CharacterBuildDocumentStore _characterBuildDocumentStore = new();
         private readonly StatBlockFormatter _statBlockFormatter = new();
         private readonly CharacterBuildReplayFactory _buildReplayFactory = new();
+        private readonly CharacterBuildAssembler _buildAssembler = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -3333,23 +3334,15 @@ namespace Eclipse_Library.UI
 
             try
             {
-                var buildLevel = _classLevels.Count;
                 var selectedRace = GetSelectedRaceDefinition();
-                var build = new CharacterBuild(
-                    new CharacterSeed(inputs.Name, inputs.AbilityScores, inputs.Size, selectedRace, _raceAbilityCatalog, _levelAbilityScoreAdjustments),
-                    buildLevel);
-
-                foreach (var row in _classLevels
-                    .SelectMany(x => x.Purchases)
-                    .OrderBy(x => x.Level))
-                {
-                    build.AddPurchase(row.Level, row.CreatePurchase());
-                }
-
-                foreach (var purchase in CreateBuilderChoicePurchases())
-                {
-                    build.AddPurchase(buildLevel, purchase);
-                }
+                var build = _buildAssembler.CreateBuild(
+                    inputs,
+                    selectedRace,
+                    _raceAbilityCatalog,
+                    _levelAbilityScoreAdjustments,
+                    _classLevels,
+                    _selectedFeats,
+                    _skillRows);
 
                 var rulesConfig = _buildReplayFactory.CreateRulesConfig(_heroSettings);
                 var result = _buildReplayFactory.Replay(build, rulesConfig);
@@ -3381,23 +3374,6 @@ namespace Eclipse_Library.UI
                 {
                     SetStatus($"Could not calculate character: {ex.Message}");
                 }
-            }
-        }
-
-        private IEnumerable<IPurchase> CreateBuilderChoicePurchases()
-        {
-            foreach (var feat in _selectedFeats.Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Count > 0))
-            {
-                yield return new SelectFeatPurchase(feat.Name, feat.Count);
-            }
-
-            foreach (var skill in _skillRows.Where(x => x.SkillPointsSpent > 0))
-            {
-                yield return new AllocateSkillRanksPurchase(
-                    skill.DisplayName,
-                    skill.SkillPointsSpent,
-                    isRelevantSkill: skill.RankMultiplier >= 1m,
-                    rankMultiplier: skill.RankMultiplier);
             }
         }
 
