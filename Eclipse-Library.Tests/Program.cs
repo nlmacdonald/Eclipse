@@ -12,6 +12,9 @@ var tests = new (string Name, Action Run)[]
     ("BuildReplayer advances levels with CP progression", BuildReplayerAdvancesLevelsWithCpProgression),
     ("BuildReplayer reports skill rank cap diagnostics", BuildReplayerReportsSkillRankCapDiagnostics),
     ("BuildReplayer records failed purchases and continues", BuildReplayerRecordsFailedPurchasesAndContinues),
+    ("BuildReplayer reports selected feat allowance diagnostics", BuildReplayerReportsSelectedFeatAllowanceDiagnostics),
+    ("BuildReplayer reports skill point allowance diagnostics", BuildReplayerReportsSkillPointAllowanceDiagnostics),
+    ("BuildReplayer accepts skill point allowance from template and Intelligence", BuildReplayerAcceptsSkillPointAllowanceFromTemplateAndIntelligence),
 };
 
 var failures = new List<string>();
@@ -279,6 +282,51 @@ static void BuildReplayerRecordsFailedPurchasesAndContinues()
     AssertEqual(1, result.Character.SelectedFeats["Dodge"], "SelectedFeats[Dodge]");
 }
 
+static void BuildReplayerReportsSelectedFeatAllowanceDiagnostics()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Feat Allowance Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new SelectFeatPurchase("Dodge"));
+    build.AddPurchase(1, new SelectFeatPurchase("Power Attack"));
+
+    var result = CreateStandardReplayer().Replay(build);
+
+    AssertEqual(true, result.HasErrors, "HasErrors");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Code == "FEAT_SELECTION_OVERSPENT"), "FEAT_SELECTION_OVERSPENT diagnostic present");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Context?.ValidatorId == "SELECTED_FEAT_ALLOWANCE"), "Feat allowance validator id present");
+}
+
+static void BuildReplayerReportsSkillPointAllowanceDiagnostics()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Skill Allowance Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new AllocateSkillRanksPurchase("Perception", 1, isRelevantSkill: true, rankMultiplier: 1m));
+
+    var result = CreateStandardReplayer().Replay(build);
+
+    AssertEqual(true, result.HasErrors, "HasErrors");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"), "SKILL_POINTS_OVERSPENT diagnostic present");
+    AssertEqual(true, result.Diagnostics.Any(x => x.Context?.ValidatorId == "SKILL_POINT_ALLOWANCE"), "Skill point allowance validator id present");
+}
+
+static void BuildReplayerAcceptsSkillPointAllowanceFromTemplateAndIntelligence()
+{
+    var build = new CharacterBuild(
+        new CharacterSeed("Skill Allowance Pass Test", new AbilityScores(10, 10, 10, 14, 10, 10)),
+        targetLevel: 1);
+
+    build.AddPurchase(1, new BuySkillRanksPurchase("Unassigned Skill Points", 4, isRelevantSkill: true));
+    build.AddPurchase(1, new AllocateSkillRanksPurchase("Spellcraft", 12, isRelevantSkill: true, rankMultiplier: 1m));
+
+    var result = CreateStandardReplayer().Replay(build, cpProgression: new FixedCpProgression(totalCp: 24));
+
+    AssertEqual(false, result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"), "SKILL_POINTS_OVERSPENT diagnostic absent");
+}
+
 static BuildReplayer CreateStandardReplayer()
 {
     var rulesConfig = new BuildRulesConfig();
@@ -292,6 +340,8 @@ static BuildReplayer CreateStandardReplayer()
     var finalValidators = new IFinalBuildValidator[]
     {
         new CpOverspendFinalValidator(),
+        new SelectedFeatAllowanceValidator(),
+        new SkillPointAllowanceValidator(rulesConfig.Skills),
     };
 
     return new BuildReplayer(stepValidators, finalValidators);

@@ -38,6 +38,10 @@ namespace Eclipse_Library
 
         public string Description => $"Allocate {_skillPointsSpent} skill point(s) to {_skillName}";
 
+        public string SkillName => _skillName;
+
+        public int SkillPointsSpent => _skillPointsSpent;
+
         public void Apply(Character character)
         {
             if (character is null)

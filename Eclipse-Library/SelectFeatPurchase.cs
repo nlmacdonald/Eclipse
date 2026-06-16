@@ -27,6 +27,10 @@ namespace Eclipse_Library
             ? $"Select feat: {_featName}"
             : $"Select feat: {_featName} x{_count}";
 
+        public string FeatName => _featName;
+
+        public int Count => _count;
+
         public void Apply(Character character)
         {
             if (character is null)

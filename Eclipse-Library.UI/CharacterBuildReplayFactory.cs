@@ -58,6 +58,8 @@ namespace Eclipse_Library.UI
             var finalValidators = new IFinalBuildValidator[]
             {
                 new CpOverspendFinalValidator(),
+                new SelectedFeatAllowanceValidator(),
+                new SkillPointAllowanceValidator(rulesConfig.Skills),
                 new RuleValidatorFinalAdapter(new AbilityPrerequisiteValidator()),
             };
 
