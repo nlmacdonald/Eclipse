@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eclipse-Library", "Eclipse-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eclipse-Library.UI", "Eclipse-Library.UI\Eclipse-Library.UI.csproj", "{C2A472C1-6AF2-48F3-84BB-9EBE729551D1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eclipse-Library.Tests", "Eclipse-Library.Tests\Eclipse-Library.Tests.csproj", "{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{C2A472C1-6AF2-48F3-84BB-9EBE729551D1}.Release|x64.Build.0 = Release|Any CPU
 		{C2A472C1-6AF2-48F3-84BB-9EBE729551D1}.Release|x86.ActiveCfg = Release|Any CPU
 		{C2A472C1-6AF2-48F3-84BB-9EBE729551D1}.Release|x86.Build.0 = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|x64.Build.0 = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Debug|x86.Build.0 = Debug|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|x64.ActiveCfg = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|x64.Build.0 = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|x86.ActiveCfg = Release|Any CPU
+		{F4F6E508-6A72-4EA5-AA3D-EF22BC15923A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

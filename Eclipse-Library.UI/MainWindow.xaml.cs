@@ -228,8 +228,9 @@ namespace Eclipse_Library.UI
                 path = saveDialog.FileName;
             }
 
-            var document = new CharacterSaveDocument
+            var document = new CharacterBuildDocument
             {
+                SchemaVersion = 2,
                 HeroName = CharacterNameTextBox.Text,
                 PlayerName = PlayerNameTextBox.Text,
                 RulesetId = _heroSettings.RulesetId,
@@ -253,10 +254,28 @@ namespace Eclipse_Library.UI
                 Languages = _knownLanguages.ToList(),
                 ClassLevels = _classLevels.Select(x => new CharacterClassLevelSaveDocument
                 {
+                    CharacterLevel = x.CharacterLevel,
                     TemplateId = x.TemplateId,
+                    TemplateName = x.TemplateName,
+                    TemplateLevel = x.TemplateLevel,
+                    Source = x.Source,
                     HpNote = x.HpNote,
                     FavoredBonus = x.FavoredBonus,
                 }).ToList(),
+                Feats = _selectedFeats.Select(x => new CharacterFeatSaveDocument
+                {
+                    Name = x.Name,
+                    Count = x.Count,
+                }).ToList(),
+                SkillAllocations = _skillRows
+                    .Where(x => x.SkillPointsSpent > 0 || !string.IsNullOrWhiteSpace(x.Specialization))
+                    .Select(x => new CharacterSkillAllocationSaveDocument
+                    {
+                        Name = x.Name,
+                        Specialization = x.Specialization,
+                        SkillPointsSpent = x.SkillPointsSpent,
+                    })
+                    .ToList(),
             };
 
             File.WriteAllText(path, JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
@@ -266,10 +285,10 @@ namespace Eclipse_Library.UI
 
         private void LoadCharacter(string path)
         {
-            CharacterSaveDocument? document;
+            CharacterBuildDocument? document;
             try
             {
-                document = JsonSerializer.Deserialize<CharacterSaveDocument>(File.ReadAllText(path));
+                document = JsonSerializer.Deserialize<CharacterBuildDocument>(File.ReadAllText(path));
             }
             catch (Exception ex)
             {
@@ -344,9 +363,70 @@ namespace Eclipse_Library.UI
                 }
             }
 
+            RestoreSavedFeats(document.Feats);
+            RestoreSavedSkillAllocations(document.SkillAllocations);
             _currentCharacterFilePath = path;
             RefreshCharacterBuild();
             SetStatus($"Opened character: {path}");
+        }
+
+        private void RestoreSavedFeats(IEnumerable<CharacterFeatSaveDocument>? feats)
+        {
+            _selectedFeats.Clear();
+
+            foreach (var feat in feats ?? Enumerable.Empty<CharacterFeatSaveDocument>())
+            {
+                if (string.IsNullOrWhiteSpace(feat.Name))
+                {
+                    continue;
+                }
+
+                _selectedFeats.Add(new SelectedFeatRow(feat.Name.Trim())
+                {
+                    Count = Math.Max(1, feat.Count),
+                });
+            }
+
+            RefreshFeatsSummary();
+        }
+
+        private void RestoreSavedSkillAllocations(IEnumerable<CharacterSkillAllocationSaveDocument>? allocations)
+        {
+            foreach (var allocation in allocations ?? Enumerable.Empty<CharacterSkillAllocationSaveDocument>())
+            {
+                if (string.IsNullOrWhiteSpace(allocation.Name))
+                {
+                    continue;
+                }
+
+                var row = FindSkillAllocationRow(allocation.Name, allocation.Specialization);
+                if (row is null && !string.IsNullOrWhiteSpace(allocation.Specialization))
+                {
+                    AddSkillSpecializationRow(
+                        new SkillSpecializationDefinition(allocation.Name.Trim(), allocation.Specialization.Trim(), baseDescription: null),
+                        setStatus: false);
+                    row = FindSkillAllocationRow(allocation.Name, allocation.Specialization);
+                }
+
+                if (row is not null)
+                {
+                    row.SkillPointsSpent = Math.Max(0, allocation.SkillPointsSpent);
+                }
+                else
+                {
+                    SetStatus($"Skipped missing skill allocation: {allocation.DisplayName}.");
+                }
+            }
+
+            RefreshSkillDerivedFields();
+            RefreshSkillPointsSummary();
+        }
+
+        private SkillAllocationRow? FindSkillAllocationRow(string name, string? specialization)
+        {
+            return _skillRows.FirstOrDefault(x =>
+                string.Equals(x.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase)
+                && string.Equals(x.Specialization ?? "", specialization?.Trim() ?? "", StringComparison.OrdinalIgnoreCase));
         }
 
         private static string SanitizeFileName(string? name)
@@ -4556,39 +4636,6 @@ namespace Eclipse_Library.UI
         {
             return $"d{(int)hitDie}";
         }
-    }
-
-    public sealed class CharacterSaveDocument
-    {
-        public string HeroName { get; set; } = "New Character";
-        public string PlayerName { get; set; } = "";
-        public RulesetId RulesetId { get; set; } = RulesetId.Dnd35;
-        public int TargetLevel { get; set; } = 1;
-        public int HitPoints { get; set; }
-        public int StartingGold { get; set; }
-        public int Experience { get; set; }
-        public PathfinderXpProgression PathfinderProgression { get; set; } = PathfinderXpProgression.Medium;
-        public int Strength { get; set; } = 10;
-        public int Dexterity { get; set; } = 10;
-        public int Constitution { get; set; } = 10;
-        public int Intelligence { get; set; } = 10;
-        public int Wisdom { get; set; } = 10;
-        public int Charisma { get; set; } = 10;
-        public Dictionary<string, int> LevelAbilityScoreAdjustments { get; set; } = new();
-        public string Race { get; set; } = "Choose Race";
-        public CharacterSize? Size { get; set; }
-        public string Alignment { get; set; } = "Choose Alignment";
-        public string Deity { get; set; } = "Choose Deity";
-        public bool ReplaceCommon { get; set; }
-        public List<string> Languages { get; set; } = new();
-        public List<CharacterClassLevelSaveDocument> ClassLevels { get; set; } = new();
-    }
-
-    public sealed class CharacterClassLevelSaveDocument
-    {
-        public Guid TemplateId { get; set; }
-        public string HpNote { get; set; } = "";
-        public string FavoredBonus { get; set; } = "";
     }
 
     public sealed class SkillSpecializationDefinition
