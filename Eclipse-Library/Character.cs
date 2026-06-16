@@ -13,6 +13,7 @@ namespace Eclipse_Library
             .ToDictionary(x => x, _ => 0);
         private readonly List<AbilityDefinition> _abilities = new();
         private readonly List<PurchasedAbility> _purchasedAbilities = new();
+        private readonly Dictionary<string, int> _selectedFeats = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<MagicProgressionType, int> _magicLevels = Enum
             .GetValues(typeof(MagicProgressionType))
             .Cast<MagicProgressionType>()
@@ -81,6 +82,7 @@ namespace Eclipse_Library
         public IReadOnlyList<LimitedSaveBonus> LimitedSaveBonuses => _limitedSaveBonuses.AsReadOnly();
         public IReadOnlyCollection<AbilityDefinition> Abilities => _abilities.AsReadOnly();
         public IReadOnlyList<PurchasedAbility> PurchasedAbilities => _purchasedAbilities.AsReadOnly();
+        public IReadOnlyDictionary<string, int> SelectedFeats => _selectedFeats;
         public IReadOnlyDictionary<string, SkillEntry> Skills => _skills;
         public IReadOnlyDictionary<string, IReadOnlyList<SkillSpecialty>> SkillSpecialties =>
             _skillSpecialties.ToDictionary(x => x.Key, x => (IReadOnlyList<SkillSpecialty>)x.Value.AsReadOnly(), StringComparer.OrdinalIgnoreCase);
@@ -449,6 +451,23 @@ namespace Eclipse_Library
             _bonusFeats += amount;
         }
 
+        public void SelectFeat(string featName, int count = 1)
+        {
+            if (string.IsNullOrWhiteSpace(featName))
+            {
+                throw new ArgumentException("Feat name is required.", nameof(featName));
+            }
+
+            if (count < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count), count, "Feat count must be >= 1.");
+            }
+
+            var normalized = featName.Trim();
+            _selectedFeats.TryGetValue(normalized, out var current);
+            _selectedFeats[normalized] = current + count;
+        }
+
         public void AddBonusSkillPoints(int amount)
         {
             if (amount < 0)
@@ -685,6 +704,12 @@ namespace Eclipse_Library
                 ? "None"
                 : string.Join(", ", _abilities.Select(x => x.Name));
 
+            var selectedFeatsSummary = _selectedFeats.Count == 0
+                ? "None"
+                : string.Join(", ", _selectedFeats
+                    .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.Value == 1 ? x.Key : $"{x.Key} x{x.Value}"));
+
             var limitedSaveSummary = _limitedSaveBonuses.Count == 0
                 ? "None"
                 : string.Join(", ", _limitedSaveBonuses.Select(x => $"{x.SaveType} {FormatSigned(x.Bonus)} ({x.Limitation})"));
@@ -727,6 +752,7 @@ namespace Eclipse_Library
             $"Skills: {skillsSummary}",
             $"Skill Specialties: {specialtiesSummary}",
             $"Abilities: {abilitiesSummary}",
+            $"Selected Feats: {selectedFeatsSummary}",
             $"Bonus Feats: {BonusFeats}",
             $"Bonus Skill Points: {BonusSkillPoints}",
             $"Limited Saves: {limitedSaveSummary}",
@@ -775,6 +801,11 @@ namespace Eclipse_Library
                     x.Modifiers.Select(m => new AbilityModifier(m.Type, m.Details)),
                     x.GmApproved,
                     x.SelectedOptions.Select(o => o.Definition))));
+
+            foreach (var entry in _selectedFeats)
+            {
+                copy._selectedFeats[entry.Key] = entry.Value;
+            }
 
             foreach (var entry in _magicLevels)
             {

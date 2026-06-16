@@ -6,6 +6,7 @@ var tests = new (string Name, Action Run)[]
     ("CharacterBuildDocument round-trips character builder state", CharacterBuildDocumentRoundTrips),
     ("CharacterBuildDocument loads old saves without new state", CharacterBuildDocumentLoadsOldSaveShape),
     ("CharacterBuildDocument tolerates null optional collections", CharacterBuildDocumentToleratesNullCollections),
+    ("Builder choice purchases update character state without CP spend", BuilderChoicePurchasesUpdateCharacterState),
 };
 
 var failures = new List<string>();
@@ -168,6 +169,19 @@ static void CharacterBuildDocumentToleratesNullCollections()
     AssertNotNull(document.ClassLevels, "ClassLevels");
     AssertNotNull(document.Feats, "Feats");
     AssertNotNull(document.SkillAllocations, "SkillAllocations");
+}
+
+static void BuilderChoicePurchasesUpdateCharacterState()
+{
+    var character = Character.CreateLevelOne("Choice Test", new AbilityScores(10, 10, 10, 10, 10, 10), totalCp: 24);
+
+    new SelectFeatPurchase("Power Attack", count: 2).Apply(character);
+    new AllocateSkillRanksPurchase("Knowledge (arcana)", skillPointsSpent: 3, isRelevantSkill: false, rankMultiplier: 0.5m).Apply(character);
+
+    AssertEqual(0, character.SpentCp, "SpentCp");
+    AssertEqual(2, character.SelectedFeats["Power Attack"], "SelectedFeats[Power Attack]");
+    AssertEqual(1.5m, character.GetSkillRanks("Knowledge (arcana)"), "Knowledge (arcana) ranks");
+    AssertEqual(3, character.Skills["Knowledge (arcana)"].CpInvested, "Knowledge (arcana) skill points invested");
 }
 
 static void AssertEqual<T>(T expected, T actual, string label)

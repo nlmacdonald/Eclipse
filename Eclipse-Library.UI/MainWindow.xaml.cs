@@ -3345,6 +3345,11 @@ namespace Eclipse_Library.UI
                     build.AddPurchase(row.Level, row.CreatePurchase());
                 }
 
+                foreach (var purchase in CreateBuilderChoicePurchases())
+                {
+                    build.AddPurchase(buildLevel, purchase);
+                }
+
                 var rulesConfig = CreateBuildRulesConfigFromHeroSettings();
                 var result = CreateReplayer(rulesConfig).Replay(
                     build,
@@ -3379,6 +3384,23 @@ namespace Eclipse_Library.UI
                 {
                     SetStatus($"Could not calculate character: {ex.Message}");
                 }
+            }
+        }
+
+        private IEnumerable<IPurchase> CreateBuilderChoicePurchases()
+        {
+            foreach (var feat in _selectedFeats.Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Count > 0))
+            {
+                yield return new SelectFeatPurchase(feat.Name, feat.Count);
+            }
+
+            foreach (var skill in _skillRows.Where(x => x.SkillPointsSpent > 0))
+            {
+                yield return new AllocateSkillRanksPurchase(
+                    skill.DisplayName,
+                    skill.SkillPointsSpent,
+                    isRelevantSkill: skill.RankMultiplier >= 1m,
+                    rankMultiplier: skill.RankMultiplier);
             }
         }
 
