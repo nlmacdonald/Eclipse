@@ -1,0 +1,127 @@
+<Window x:Class="Eclipse_Library.UI.HeroConfigurationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configure Your Hero"
+        Height="620"
+        Width="760"
+        MinHeight="560"
+        MinWidth="720"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0,4,16,2" />
+            <Setter Property="MinHeight" Value="28" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,4,16,2" />
+            <Setter Property="MinHeight" Value="28" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,4,8,8" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="12,4" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Background="#C97822" Padding="10,7" Margin="0,0,0,12">
+            <TextBlock Text="Configure Your Hero" Foreground="White" FontSize="16" FontWeight="SemiBold" TextAlignment="Center" />
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="310" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBox x:Name="HeroNameTextBox" />
+                    <TextBlock FontSize="11" Foreground="#555" Text="Hero name" Margin="0,0,16,10" />
+
+                    <TextBox x:Name="PlayerNameTextBox" />
+                    <TextBlock FontSize="11" Foreground="#555" Text="Player name" Margin="0,0,16,10" />
+
+                    <ComboBox x:Name="RulesetComboBox" SelectionChanged="RulesetComboBox_SelectionChanged" />
+                    <TextBlock FontSize="11" Foreground="#555" Text="Ruleset. Changing this refreshes available sources and options." Margin="0,0,16,10" />
+
+                    <ComboBox x:Name="AbilityMethodComboBox" />
+                    <TextBlock FontSize="11" Foreground="#555" Text="Ability score method" Margin="0,0,16,10" />
+
+                    <Grid Width="210" HorizontalAlignment="Left" Margin="0,4,0,12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Starting Level" FontSize="20" FontWeight="SemiBold" TextAlignment="Center" />
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                            <Button Content="-" Width="34" Click="DecreaseLevel_Click" />
+                            <TextBox x:Name="StartingLevelTextBox" Text="1" Width="70" TextAlignment="Center" FontSize="24" />
+                            <Button Content="+" Width="34" Click="IncreaseLevel_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox x:Name="SaveDefaultsCheckBox" Content="Save these settings as defaults" Margin="0,4,0,12" />
+                    <TextBlock FontSize="11" Foreground="#555" Text="Defaults are saved for future hero creation." Margin="0,0,16,10" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="120" />
+                </Grid.RowDefinitions>
+
+                <TextBlock FontWeight="SemiBold" Text="Hero Settings" Margin="0,0,0,8" />
+                <TreeView Grid.Row="1" x:Name="OptionsTreeView">
+                    <TreeViewItem Header="Rule Sources" IsExpanded="True">
+                        <ItemsControl x:Name="SourceOptionsItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" IsEnabled="{Binding CanToggle}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </TreeViewItem>
+                    <TreeViewItem Header="Alternative Rules" IsExpanded="True">
+                        <CheckBox x:Name="GestaltOptionCheckBox" Content="Gestalt variant core" Margin="0,2" />
+                        <CheckBox x:Name="MaxHpFirstLevelCheckBox" Content="Maximum HP at first level" IsChecked="True" Margin="0,2" />
+                        <CheckBox x:Name="UseDefaultStartingCashCheckBox" Content="Use default starting cash" IsChecked="True" Margin="0,2" />
+                        <StackPanel Margin="0,8,16,4">
+                            <TextBlock Text="Skill rank cap" FontSize="11" Foreground="#555" />
+                            <ComboBox x:Name="SkillRankCapModeComboBox" />
+                        </StackPanel>
+                        <CheckBox x:Name="SuppressIrrelevantPromotionCheckBox" Content="Suppress Eclipse 6 CP irrelevant skill promotion" Margin="0,2" />
+                        <CheckBox x:Name="UseFirstCharacterLevelSkillPointMultiplierCheckBox" Content="D&amp;D 3.0/3.5 x4 skill points only at character level 1" IsChecked="True" Margin="0,2" />
+                    </TreeViewItem>
+                </TreeView>
+
+                <TextBlock Grid.Row="2" FontWeight="SemiBold" Text="Included Resources" Margin="0,12,0,6" />
+                <TextBox Grid.Row="3"
+                         x:Name="ResourceSummaryTextBox"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Grid>
+
+        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="OK" Width="96" Click="Ok_Click" />
+                <Button Content="Open File" Width="96" Click="OpenFile_Click" />
+                <Button Content="Cancel" Width="96" Click="Cancel_Click" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

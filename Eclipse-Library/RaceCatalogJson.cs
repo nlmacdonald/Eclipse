@@ -1,0 +1,66 @@
+using System;
+using System.IO;
+using System.Runtime.Serialization.Json;
+using System.Text;
+
+namespace Eclipse_Library
+{
+    public static class RaceCatalogJson
+    {
+        public static RaceCatalogDocument Deserialize(string json)
+        {
+            if (json is null)
+            {
+                throw new ArgumentNullException(nameof(json));
+            }
+
+            var settings = new DataContractJsonSerializerSettings
+            {
+                UseSimpleDictionaryFormat = true,
+            };
+
+            var serializer = new DataContractJsonSerializer(typeof(RaceCatalogDocument), settings);
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            return (RaceCatalogDocument)(serializer.ReadObject(ms)
+                ?? throw new InvalidOperationException("Failed to deserialize RaceCatalogDocument."));
+        }
+
+        public static string Serialize(RaceCatalogDocument document)
+        {
+            if (document is null)
+            {
+                throw new ArgumentNullException(nameof(document));
+            }
+
+            var settings = new DataContractJsonSerializerSettings
+            {
+                UseSimpleDictionaryFormat = true,
+            };
+
+            var serializer = new DataContractJsonSerializer(typeof(RaceCatalogDocument), settings);
+            using var ms = new MemoryStream();
+            serializer.WriteObject(ms, document);
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+
+        public static RaceCatalogDocument LoadFromFile(string path)
+        {
+            if (path is null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            return Deserialize(File.ReadAllText(path, Encoding.UTF8));
+        }
+
+        public static void SaveToFile(string path, RaceCatalogDocument document)
+        {
+            if (path is null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            File.WriteAllText(path, Serialize(document), Encoding.UTF8);
+        }
+    }
+}

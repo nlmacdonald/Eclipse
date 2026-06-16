@@ -1,0 +1,521 @@
+﻿{
+    "schemaVersion":  1,
+    "sourceDocument":  "Core racial rules",
+    "abilities":  [
+                      {
+                          "id":  "movement-speed",
+                          "name":  "Movement Speed",
+                          "description":  "A configurable base movement mode and speed, such as ground 30 ft., swim 20 ft., fly 60 ft., or climb 20 ft.",
+                          "parameters":  [
+                                             {
+                                                 "name":  "kind",
+                                                 "kind":  "text",
+                                                 "defaultValue":  "ground"
+                                             },
+                                             {
+                                                 "name":  "feet",
+                                                 "kind":  "feet",
+                                                 "defaultValue":  "30"
+                                             }
+                                         ],
+                          "effects":  [
+                                          {
+                                              "type":  "movement",
+                                              "movementKindParameter":  "kind",
+                                              "feetParameter":  "feet"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "darkvision",
+                          "name":  "Darkvision",
+                          "description":  "A configurable visual sense measured in feet.",
+                          "parameters":  [
+                                             {
+                                                 "name":  "feet",
+                                                 "kind":  "feet",
+                                                 "defaultValue":  "60"
+                                             }
+                                         ],
+                          "effects":  [
+                                          {
+                                              "type":  "sense",
+                                              "senseKind":  "Darkvision",
+                                              "feetParameter":  "feet"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "low-light-vision",
+                          "name":  "Low-Light Vision",
+                          "description":  "A visual sense without a fixed range in the base racial entries.",
+                          "effects":  [
+                                          {
+                                              "type":  "sense",
+                                              "senseKind":  "Low-Light Vision",
+                                              "feet":  0
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "human-bonus-feat",
+                          "name":  "Bonus Feat",
+                          "description":  "1 extra feat at 1st level, because humans are quick to master specialized tasks and varied in their talents. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus-feat",
+                                              "amount":  1
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "human-skilled",
+                          "name":  "Skilled",
+                          "description":  "4 extra skill points at 1st level and 1 extra skill point at each additional level, since humans are versatile and capable. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "skill-points",
+                                              "firstLevelAmount":  4,
+                                              "perLevelAmount":  1
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-stonecunning",
+                          "name":  "Stonecunning",
+                          "description":  "Stonecunning grants dwarves a +2 racial bonus on checks to notice unusual stonework, can notice such work within 10 feet as if actively searching, can use Search to find stonework traps as a rogue can, and can intuit approximate depth underground. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Search",
+                                              "amount":  2,
+                                              "bonusType":  15,
+                                              "condition":  "unusual stonework and stonework traps"
+                                          },
+                                          {
+                                              "type":  "note",
+                                              "note":  "Stonecunning: +2 racial bonus on checks to notice unusual stonework; may notice such work within 10 ft. as if actively searching; may use Search to find stonework traps as a rogue can; can intuit approximate depth underground."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-hardy",
+                          "name":  "Hardy",
+                          "description":  "+2 racial bonus on saving throws against poison and +2 racial bonus on saving throws against spells and spell-like effects. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against poison"
+                                          },
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against spells and spell-like effects"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-hatred",
+                          "name":  "Hatred",
+                          "description":  "+1 racial bonus to attack rolls against orcs and goblinoids. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Attack",
+                                              "amount":  1,
+                                              "bonusType":  15,
+                                              "condition":  "against orcs and goblinoids"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-defensive-training",
+                          "name":  "Defensive Training",
+                          "description":  "+4 dodge bonus against giants. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Armor Class",
+                                              "amount":  4,
+                                              "bonusType":  5,
+                                              "condition":  "against giants"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-greed",
+                          "name":  "Greed",
+                          "description":  "+2 racial bonus on Appraise checks that are related to stone or metal items. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Appraise",
+                                              "amount":  2,
+                                              "bonusType":  15,
+                                              "condition":  "stone or metal items"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-craftsman",
+                          "name":  "Craftsman",
+                          "description":  "+2 racial bonus on Craft checks that are related to stone or metal. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Craft",
+                                              "amount":  2,
+                                              "bonusType":  15,
+                                              "condition":  "stone or metal"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-stability",
+                          "name":  "Stability",
+                          "description":  "Dwarves gain a +4 bonus on ability checks made to resist being bull rushed or tripped when standing on the ground. (3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Ability Check",
+                                              "amount":  4,
+                                              "bonusType":  15,
+                                              "condition":  "resist bull rush or trip while standing on the ground"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-weapon-familiarity",
+                          "name":  "Weapon Familiarity",
+                          "description":  "Dwarves may treat dwarven waraxes and dwarven urgroshes as martial weapons, rather than exotic weapons. (3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "note",
+                                              "note":  "Weapon Familiarity: Treat dwarven waraxes and dwarven urgroshes as martial weapons rather than exotic weapons."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "dwarf-slow-and-steady",
+                          "name":  "Slow and Steady",
+                          "description":  "Dwarf base land speed is 20 feet. However, dwarves can move at this speed even when wearing medium or heavy armor or whose speed is reduced in such conditions). (3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "movement",
+                                              "movementKind":  "ground",
+                                              "feet":  20
+                                          },
+                                          {
+                                              "type":  "note",
+                                              "note":  "Slow and Steady: can move 20 ft. even in medium or heavy armor or when carrying a medium or heavy load."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "elf-immunities",
+                          "name":  "Elven Immunities",
+                          "description":  "Immunity to magic sleep spells and effects, and a +2 racial saving throw bonus against Enchantment spells or effects. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against Enchantment spells or effects"
+                                          },
+                                          {
+                                              "type":  "note",
+                                              "note":  "Elven Immunities: immune to magic sleep spells and effects."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "elf-weapon-familiarity",
+                          "name":  "Weapon Familiarity",
+                          "description":  "Proficient with either longsword or rapier; proficient with shortbow, longbow, composite longbow, and composite shortbow. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "note",
+                                              "note":  "Weapon Familiarity: proficient with either longsword or rapier; proficient with shortbow, longbow, composite longbow, and composite shortbow."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "elf-keen-senses",
+                          "name":  "Keen Senses",
+                          "description":  "+2 racial bonus on Listen, Search, and Spot checks. An elf who merely passes within 5 feet of a secret or concealed door is entitled to a Search check as if actively looking. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Listen",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Search",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Spot",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "note",
+                                              "note":  "Keen Senses: may notice a secret or concealed door within 5 ft. with a Search check as if actively looking."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-illusion-resistance",
+                          "name":  "Illusion Resistance",
+                          "description":  "+2 racial bonus on saving throws against illusions, because gnomes are innately familiar with illusions of all kinds. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against illusions"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-hatred",
+                          "name":  "Hatred",
+                          "description":  "+1 racial bonus to attack rolls against kobolds and goblinoids. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Attack",
+                                              "amount":  1,
+                                              "bonusType":  15,
+                                              "condition":  "against kobolds and goblinoids"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-defensive-training",
+                          "name":  "Defensive Training",
+                          "description":  "+4 dodge bonus against giants. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Armor Class",
+                                              "amount":  4,
+                                              "bonusType":  6,
+                                              "condition":  "against giants"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-keen-senses",
+                          "name":  "Keen Senses",
+                          "description":  "+2 racial bonus on Listen checks. Gnomes have keen ears. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Listen",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-obsessive",
+                          "name":  "Obsessive",
+                          "description":  "+2 racial bonus on Alchemy checks. A gnome sensitive nose allows him to monitor alchemical processes by smell. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Alchemy",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "gnome-magic",
+                          "name":  "Gnome Magic",
+                          "description":  "1/day speak with animals (burrowing mammal only, duration 1 minute). A gnome with Charisma 10+ also has 1/day dancing lights, ghost sound, and prestidigitation. Caster level 1st; save DC 10 + Cha modifier + spell level. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "note",
+                                              "note":  "Gnome Magic: 1/day speak with animals (burrowing mammal only, 1 minute). With Charisma 10+, also 1/day dancing lights, ghost sound, and prestidigitation; caster level 1st; save DC 10 + Cha modifier + spell level."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "half-elf-immunities",
+                          "name":  "Elven Immunities",
+                          "description":  "Immunity to sleep spells and similar magical effects, and a +2 racial saving throw bonus against Enchantment spells or effects. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against Enchantment spells or effects"
+                                          },
+                                          {
+                                              "type":  "note",
+                                              "note":  "Elven Immunities: immune to sleep spells and similar magical effects."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "half-elf-keen-senses",
+                          "name":  "Keen Senses",
+                          "description":  "+1 racial bonus on Listen, Search, and Spot checks. Half-elves do not notice secret doors simply by passing near them. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Listen",
+                                              "amount":  1,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Search",
+                                              "amount":  1,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Spot",
+                                              "amount":  1,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "half-elf-elf-blood",
+                          "name":  "Elf Blood",
+                          "description":  "For all special abilities and effects, a half-elf is considered an elf. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "note",
+                                              "note":  "Elf Blood: considered an elf for all special abilities and effects."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "half-elf-adaptability",
+                          "name":  "Adaptability",
+                          "description":  "+2 racial bonus on Diplomacy and Gather Information checks. Half-elves get along naturally with all people. (3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Diplomacy",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Gather Information",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "half-orc-orc-blood",
+                          "name":  "Orc Blood",
+                          "description":  "For all special abilities and effects, a half-orc is considered an orc. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "note",
+                                              "note":  "Orc Blood: considered an orc for all special abilities and effects."
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-sure-footed",
+                          "name":  "Sure-Footed",
+                          "description":  "+2 racial bonus on Climb, Jump, and Move Silently checks. Halflings are agile, surefooted, and athletic. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Climb",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Jump",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          },
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Move Silently",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-luck",
+                          "name":  "Halfling Luck",
+                          "description":  "+1 racial bonus on all saving throws. Halflings are surprisingly capable of avoiding mishaps. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  1,
+                                              "condition":  "all saving throws"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-fearless",
+                          "name":  "Fearless",
+                          "description":  "+2 morale bonus on saving throws against fear. This bonus stacks with the halfling +1 bonus on saving throws in general. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "limited-save",
+                                              "amount":  2,
+                                              "condition":  "against fear"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-weapon-familiarity-30",
+                          "name":  "Weapon Familiarity",
+                          "description":  "+1 racial attack bonus with a thrown weapon. Throwing stones is a universal sport among halflings. (3.0)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Attack",
+                                              "amount":  1,
+                                              "bonusType":  15,
+                                              "condition":  "with thrown weapons"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-weapon-familiarity-35",
+                          "name":  "Weapon Familiarity",
+                          "description":  "+1 racial bonus on attack rolls with a thrown weapon and slings. Throwing and slinging stones is a universal sport among halflings. (3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Attack",
+                                              "amount":  1,
+                                              "bonusType":  15,
+                                              "condition":  "with thrown weapons and slings"
+                                          }
+                                      ]
+                      },
+                      {
+                          "id":  "halfling-keen-senses",
+                          "name":  "Keen Senses",
+                          "description":  "+2 racial bonus on Listen checks. Halflings have keen ears. (3.0/3.5)",
+                          "effects":  [
+                                          {
+                                              "type":  "bonus",
+                                              "target":  "Skill:Listen",
+                                              "amount":  2,
+                                              "bonusType":  15
+                                          }
+                                      ]
+                      }
+                  ]
+}

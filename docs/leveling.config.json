@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "rulesets": [
+    {
+      "rulesetId": 0,
+      "tables": [
+        {
+          "levels": [
+            { "level": 1, "xpTotal": 0, "grantsFeat": true },
+            { "level": 2, "xpTotal": 1000 },
+            { "level": 3, "xpTotal": 3000, "grantsFeat": true },
+            { "level": 4, "xpTotal": 6000, "grantsAbilityScoreIncrease": true },
+            { "level": 5, "xpTotal": 10000 },
+            { "level": 6, "xpTotal": 15000, "grantsFeat": true },
+            { "level": 7, "xpTotal": 21000 },
+            { "level": 8, "xpTotal": 28000, "grantsAbilityScoreIncrease": true },
+            { "level": 9, "xpTotal": 36000, "grantsFeat": true },
+            { "level": 10, "xpTotal": 45000 },
+            { "level": 11, "xpTotal": 55000 },
+            { "level": 12, "xpTotal": 66000, "grantsFeat": true, "grantsAbilityScoreIncrease": true },
+            { "level": 13, "xpTotal": 78000 },
+            { "level": 14, "xpTotal": 91000 },
+            { "level": 15, "xpTotal": 105000, "grantsFeat": true },
+            { "level": 16, "xpTotal": 120000, "grantsAbilityScoreIncrease": true },
+            { "level": 17, "xpTotal": 136000 },
+            { "level": 18, "xpTotal": 153000, "grantsFeat": true },
+            { "level": 19, "xpTotal": 171000 },
+            { "level": 20, "xpTotal": 190000, "grantsAbilityScoreIncrease": true }
+          ]
+        }
+      ]
+    },
+    {
+      "rulesetId": 1,
+      "tables": [
+        {
+          "levels": [
+            { "level": 1, "xpTotal": 0, "grantsFeat": true },
+            { "level": 2, "xpTotal": 1000 },
+            { "level": 3, "xpTotal": 3000, "grantsFeat": true },
+            { "level": 4, "xpTotal": 6000, "grantsAbilityScoreIncrease": true },
+            { "level": 5, "xpTotal": 10000 },
+            { "level": 6, "xpTotal": 15000, "grantsFeat": true },
+            { "level": 7, "xpTotal": 21000 },
+            { "level": 8, "xpTotal": 28000, "grantsAbilityScoreIncrease": true },
+            { "level": 9, "xpTotal": 36000, "grantsFeat": true },
+            { "level": 10, "xpTotal": 45000 },
+            { "level": 11, "xpTotal": 55000 },
+            { "level": 12, "xpTotal": 66000, "grantsFeat": true, "grantsAbilityScoreIncrease": true },
+            { "level": 13, "xpTotal": 78000 },
+            { "level": 14, "xpTotal": 91000 },
+            { "level": 15, "xpTotal": 105000, "grantsFeat": true },
+            { "level": 16, "xpTotal": 120000, "grantsAbilityScoreIncrease": true },
+            { "level": 17, "xpTotal": 136000 },
+            { "level": 18, "xpTotal": 153000, "grantsFeat": true },
+            { "level": 19, "xpTotal": 171000 },
+            { "level": 20, "xpTotal": 190000, "grantsAbilityScoreIncrease": true }
+          ]
+        }
+      ]
+    },
+    {
+      "rulesetId": 2,
+      "tables": [
+        {
+          "progression": 0,
+          "levels": [
+            { "level": 1, "grantsFeat": true },
+            { "level": 2, "xpTotal": 3000 },
+            { "level": 3, "xpTotal": 7500, "grantsFeat": true },
+            { "level": 4, "xpTotal": 14000, "grantsAbilityScoreIncrease": true },
+            { "level": 5, "xpTotal": 23000, "grantsFeat": true },
+            { "level": 6, "xpTotal": 35000 },
+            { "level": 7, "xpTotal": 53000, "grantsFeat": true },
+            { "level": 8, "xpTotal": 77000, "grantsAbilityScoreIncrease": true },
+            { "level": 9, "xpTotal": 115000, "grantsFeat": true },
+            { "level": 10, "xpTotal": 160000 },
+            { "level": 11, "xpTotal": 235000, "grantsFeat": true },
+            { "level": 12, "xpTotal": 330000, "grantsAbilityScoreIncrease": true },
+            { "level": 13, "xpTotal": 475000, "grantsFeat": true },
+            { "level": 14, "xpTotal": 665000 },
+            { "level": 15, "xpTotal": 955000, "grantsFeat": true },
+            { "level": 16, "xpTotal": 1350000, "grantsAbilityScoreIncrease": true },
+            { "level": 17, "xpTotal": 1900000, "grantsFeat": true },
+            { "level": 18, "xpTotal": 2700000 },
+            { "level": 19, "xpTotal": 3850000, "grantsFeat": true },
+            { "level": 20, "xpTotal": 5350000, "grantsAbilityScoreIncrease": true }
+          ]
+        },
+        {
+          "progression": 1,
+          "levels": [
+            { "level": 1, "grantsFeat": true },
+            { "level": 2, "xpTotal": 2000 },
+            { "level": 3, "xpTotal": 5000, "grantsFeat": true },
+            { "level": 4, "xpTotal": 9000, "grantsAbilityScoreIncrease": true },
+            { "level": 5, "xpTotal": 15000, "grantsFeat": true },
+            { "level": 6, "xpTotal": 23000 },
+            { "level": 7, "xpTotal": 35000, "grantsFeat": true },
+            { "level": 8, "xpTotal": 51000, "grantsAbilityScoreIncrease": true },
+            { "level": 9, "xpTotal": 75000, "grantsFeat": true },
+            { "level": 10, "xpTotal": 105000 },
+            { "level": 11, "xpTotal": 155000, "grantsFeat": true },
+            { "level": 12, "xpTotal": 220000, "grantsAbilityScoreIncrease": true },
+            { "level": 13, "xpTotal": 315000, "grantsFeat": true },
+            { "level": 14, "xpTotal": 445000 },
+            { "level": 15, "xpTotal": 635000, "grantsFeat": true },
+            { "level": 16, "xpTotal": 890000, "grantsAbilityScoreIncrease": true },
+            { "level": 17, "xpTotal": 1300000, "grantsFeat": true },
+            { "level": 18, "xpTotal": 1800000 },
+            { "level": 19, "xpTotal": 2550000, "grantsFeat": true },
+            { "level": 20, "xpTotal": 3600000, "grantsAbilityScoreIncrease": true }
+          ]
+        },
+        {
+          "progression": 2,
+          "levels": [
+            { "level": 1, "grantsFeat": true },
+            { "level": 2, "xpTotal": 1300 },
+            { "level": 3, "xpTotal": 3300, "grantsFeat": true },
+            { "level": 4, "xpTotal": 6000, "grantsAbilityScoreIncrease": true },
+            { "level": 5, "xpTotal": 10000, "grantsFeat": true },
+            { "level": 6, "xpTotal": 15000 },
+            { "level": 7, "xpTotal": 23000, "grantsFeat": true },
+            { "level": 8, "xpTotal": 34000, "grantsAbilityScoreIncrease": true },
+            { "level": 9, "xpTotal": 50000, "grantsFeat": true },
+            { "level": 10, "xpTotal": 71000 },
+            { "level": 11, "xpTotal": 105000, "grantsFeat": true },
+            { "level": 12, "xpTotal": 145000, "grantsAbilityScoreIncrease": true },
+            { "level": 13, "xpTotal": 210000, "grantsFeat": true },
+            { "level": 14, "xpTotal": 295000 },
+            { "level": 15, "xpTotal": 425000, "grantsFeat": true },
+            { "level": 16, "xpTotal": 600000, "grantsAbilityScoreIncrease": true },
+            { "level": 17, "xpTotal": 850000, "grantsFeat": true },
+            { "level": 18, "xpTotal": 1200000 },
+            { "level": 19, "xpTotal": 1700000, "grantsFeat": true },
+            { "level": 20, "xpTotal": 2400000, "grantsAbilityScoreIncrease": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

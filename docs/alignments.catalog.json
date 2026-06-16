@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "alignments": [
+    {
+      "id": "lawful-good",
+      "name": "Lawful Good",
+      "abbreviation": "LG",
+      "parts": [ "Lawful", "Good" ],
+      "description": "Lawful Good, \"Crusader\": A lawful good character acts as a good person is expected or required to act. She combines a commitment to oppose evil with the discipline to fight relentlessly. She tells the truth, keeps her word, helps those in need, and speaks out against injustice. A lawful good character hates to see the guilty go unpunished. Lawful good combines honor and compassion."
+    },
+    {
+      "id": "neutral-good",
+      "name": "Neutral Good",
+      "abbreviation": "NG",
+      "parts": [ "Neutral", "Good" ],
+      "description": "Neutral Good, \"Benefactor\": A neutral good character does the best that a good person can do. He is devoted to helping others. He works with kings and magistrates but does not feel beholden to them. Neutral good means doing what is good without bias for or against order."
+    },
+    {
+      "id": "chaotic-good",
+      "name": "Chaotic Good",
+      "abbreviation": "CG",
+      "parts": [ "Chaotic", "Good" ],
+      "description": "Chaotic Good, \"Rebel\": A chaotic good character acts as his conscience directs him with little regard for what others expect. He makes his own way, but he is kind and benevolent. He believes in goodness and right but has little use for laws and regulations. Chaotic good combines a good heart with a free spirit."
+    },
+    {
+      "id": "lawful-neutral",
+      "name": "Lawful Neutral",
+      "abbreviation": "LN",
+      "parts": [ "Lawful", "Neutral" ],
+      "description": "Lawful Neutral, \"Judge\": A lawful neutral character acts as law, tradition, or a personal code directs her. Order and organization are paramount. She may believe in personal order and live by a code, or she may favor order for all through strong organization. Lawful neutral means reliability and honor without zealotry."
+    },
+    {
+      "id": "neutral",
+      "name": "Neutral",
+      "abbreviation": "N",
+      "parts": [ "Neutral" ],
+      "description": "Neutral, \"Undecided\": A neutral character does what seems to be a good idea. She does not feel strongly one way or the other about good versus evil or law versus chaos. Some neutral characters lack conviction or bias, while others commit themselves philosophically to neutrality as a balanced middle way."
+    },
+    {
+      "id": "chaotic-neutral",
+      "name": "Chaotic Neutral",
+      "abbreviation": "CN",
+      "parts": [ "Chaotic", "Neutral" ],
+      "description": "Chaotic Neutral, \"Free Spirit\": A chaotic neutral character follows his whims. He values his own liberty, avoids authority, resents restrictions, and challenges traditions. He may be unpredictable, but his behavior is not totally random. Chaotic neutral represents freedom from both social restrictions and moral zeal."
+    },
+    {
+      "id": "lawful-evil",
+      "name": "Lawful Evil",
+      "abbreviation": "LE",
+      "parts": [ "Lawful", "Evil" ],
+      "description": "Lawful Evil, \"Dominator\": A lawful evil villain methodically takes what he wants within the limits of his code of conduct without regard for whom it hurts. He cares about tradition, loyalty, and order, but not freedom, dignity, or life. Lawful evil is sometimes called diabolical because devils are the epitome of lawful evil."
+    }
+  ]
+}

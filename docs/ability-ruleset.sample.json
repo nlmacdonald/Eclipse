@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "abilityModifiers": [
+    {
+      "type": "Corrupted",
+      "requiresDetails": true,
+      "requiresGmApproval": true,
+      "adjustments": [
+        { "kind": "EffectMultiplier", "value": 1.5 },
+        { "kind": "CostMultiplier", "value": 0.6666667 }
+      ]
+    },
+    {
+      "type": "Specialized",
+      "requiresDetails": true,
+      "requiresGmApproval": true,
+      "adjustments": [
+        { "kind": "EffectMultiplier", "value": 2.0 },
+        { "kind": "CostMultiplier", "value": 0.5 }
+      ]
+    }
+  ],
+  "bonusUses": {
+    "baseCostCp": 6,
+    "baseAdditionalUses": 4,
+    "gmoAllowsAttributeInsteadOfUses": true,
+    "additionalOptions": [
+      { "additionalUses": 1, "costCp": 2 },
+      { "additionalUses": 2, "costCp": 3 },
+      { "additionalUses": 3, "costCp": 5 },
+      { "additionalUses": 4, "costCp": 6 }
+    ]
+  },
+  "abilities": [
+    {
+      "id": "berserker",
+      "name": "Berserker",
+      "costCp": 6,
+      "options": [
+        { "id": "odinpower", "name": "Odinpower", "costCp": 3 },
+        { "id": "odinmight", "name": "Odinmight", "costCp": 3, "prerequisiteOptionIds": [ "odinpower" ] }
+      ]
+    },
+    {
+      "id": "triggering",
+      "name": "Triggering",
+      "costCp": 6,
+      "options": [
+        { "id": "simple-conditions", "name": "Simple Conditions", "costCp": 0, "costExpression": "+1 SL" }
+      ]
+    }
+  ]
+}

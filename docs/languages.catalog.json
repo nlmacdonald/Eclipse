@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "languages": [
+    { "name": "Common", "category": "Common Languages", "source": "Core", "description": "The trade tongue used by most humans and many civilized peoples." },
+    { "name": "Dwarven", "category": "Common Languages", "source": "Core", "description": "The language of dwarves." },
+    { "name": "Elven", "category": "Common Languages", "source": "Core", "description": "The language of elves." },
+    { "name": "Gnome", "category": "Common Languages", "source": "Core", "description": "The language of gnomes." },
+    { "name": "Halfling", "category": "Common Languages", "source": "Core", "description": "The language of halflings." },
+    { "name": "Orc", "category": "Common Languages", "source": "Core", "description": "The language of orcs." },
+    { "name": "Draconic", "category": "Exotic Languages", "source": "Core", "description": "An ancient tongue associated with dragons and arcane lore." },
+    { "name": "Giant", "category": "Exotic Languages", "source": "Core", "description": "The language of giants." },
+    { "name": "Goblin", "category": "Exotic Languages", "source": "Core", "description": "The language of goblinoids." },
+    { "name": "Gnoll", "category": "Exotic Languages", "source": "Core", "description": "The language of gnolls." },
+    { "name": "Sylvan", "category": "Exotic Languages", "source": "Core", "description": "The language of fey and woodland beings." },
+    { "name": "Undercommon", "category": "Exotic Languages", "source": "Core", "description": "A trade language of subterranean cultures." },
+    { "name": "Abyssal", "category": "Planar Languages", "source": "Core", "description": "A language associated with demons and chaotic evil outsiders." },
+    { "name": "Celestial", "category": "Planar Languages", "source": "Core", "description": "A language associated with good outsiders." },
+    { "name": "Infernal", "category": "Planar Languages", "source": "Core", "description": "A language associated with devils and lawful evil outsiders." },
+    { "name": "Auran", "category": "Elemental Languages", "source": "Core", "description": "The elemental language of air." },
+    { "name": "Aquan", "category": "Elemental Languages", "source": "Core", "description": "The elemental language of water." },
+    { "name": "Ignan", "category": "Elemental Languages", "source": "Core", "description": "The elemental language of fire." },
+    { "name": "Terran", "category": "Elemental Languages", "source": "Core", "description": "The elemental language of earth." },
+    { "name": "Custom Language", "category": "Custom", "source": "Custom", "description": "Once added, specify the name of the language on the Background tab." }
+  ]
+}

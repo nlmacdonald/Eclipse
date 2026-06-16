@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Sandbox/CI-friendly: avoid MSBuild workload resolver probing missing SDK locators. -->
+    <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
+  </PropertyGroup>
+</Project>
+

@@ -1,0 +1,69 @@
+<Window x:Class="Eclipse_Library.UI.TemplateSelectionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Add Class Level"
+        Height="640"
+        Width="760"
+        MinHeight="540"
+        MinWidth="700"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,4,8,8" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="12,4" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,0,8">
+            <TextBlock x:Name="LevelsRemainingText" FontSize="16" FontWeight="SemiBold" Text="Add a class level" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <TextBox x:Name="SearchTextBox" Width="220" MinHeight="28" TextChanged="SearchTextBox_TextChanged" />
+                <ComboBox x:Name="SourceFilterComboBox" Width="150" Margin="8,0,0,0" SelectionChanged="SourceFilterComboBox_SelectionChanged" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox x:Name="TemplatesListBox"
+                     DisplayMemberPath="DisplayName"
+                     SelectionChanged="TemplatesListBox_SelectionChanged" />
+
+            <TextBox Grid.Column="1"
+                     x:Name="TemplateDescriptionTextBox"
+                     Margin="12,0,0,0"
+                     FontFamily="Consolas"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     IsReadOnly="True" />
+        </Grid>
+
+        <DockPanel Grid.Row="2" Margin="0,10,0,0">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                <Button Content="Create Template" Click="CreateCustomTemplate_Click" />
+                <Button Content="Edit Selected Template" Click="EditSelectedTemplate_Click" />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="Levels to Add:" VerticalAlignment="Center" Margin="0,0,8,4" />
+                <Button Content="‹" Width="30" Padding="0" Click="DecreaseLevelsToAdd_Click" />
+                <TextBlock x:Name="LevelsToAddText" Text="1" Width="28" FontWeight="SemiBold" TextAlignment="Center" VerticalAlignment="Center" Margin="0,0,8,4" />
+                <Button Content="›" Width="30" Padding="0" Click="IncreaseLevelsToAdd_Click" />
+                <Button Content="Add &amp; Close" Width="110" Click="AddClose_Click" />
+                <Button Content="Add" Width="86" Click="Add_Click" />
+                <Button Content="Close" Width="86" Click="Close_Click" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
