@@ -4,6 +4,8 @@ using Eclipse_Library;
 var tests = new (string Name, Action Run)[]
 {
     ("CharacterBuildDocument round-trips character builder state", CharacterBuildDocumentRoundTrips),
+    ("CharacterBuildDocument loads old saves without new state", CharacterBuildDocumentLoadsOldSaveShape),
+    ("CharacterBuildDocument tolerates null optional collections", CharacterBuildDocumentToleratesNullCollections),
 };
 
 var failures = new List<string>();
@@ -107,10 +109,79 @@ static void CharacterBuildDocumentRoundTrips()
     AssertEqual(3, roundTripped.SkillAllocations[0].SkillPointsSpent, "SkillAllocations[0].SkillPointsSpent");
 }
 
+static void CharacterBuildDocumentLoadsOldSaveShape()
+{
+    const string json = """
+        {
+          "HeroName": "Old Hero",
+          "PlayerName": "Original Player",
+          "RulesetId": 1,
+          "TargetLevel": 2,
+          "Strength": 11,
+          "Dexterity": 12,
+          "Constitution": 13,
+          "Intelligence": 14,
+          "Wisdom": 15,
+          "Charisma": 16,
+          "Languages": ["Common"],
+          "ClassLevels": [
+            {
+              "TemplateId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+              "HpNote": "8",
+              "FavoredBonus": "+1 Hit Point"
+            }
+          ]
+        }
+        """;
+
+    var document = JsonSerializer.Deserialize<CharacterBuildDocument>(json)
+        ?? throw new InvalidOperationException("Document deserialized as null.");
+
+    AssertEqual("Old Hero", document.HeroName, "HeroName");
+    AssertEqual(2, document.TargetLevel, "TargetLevel");
+    AssertEqual(1, document.Languages.Count, "Languages.Count");
+    AssertNotNull(document.Feats, "Feats");
+    AssertEqual(0, document.Feats.Count, "Feats.Count");
+    AssertNotNull(document.SkillAllocations, "SkillAllocations");
+    AssertEqual(0, document.SkillAllocations.Count, "SkillAllocations.Count");
+    AssertEqual(0, document.ClassLevels[0].CharacterLevel, "ClassLevels[0].CharacterLevel default");
+}
+
+static void CharacterBuildDocumentToleratesNullCollections()
+{
+    const string json = """
+        {
+          "HeroName": "Hand Edited",
+          "Languages": null,
+          "ClassLevels": null,
+          "Feats": null,
+          "SkillAllocations": null
+        }
+        """;
+
+    var document = JsonSerializer.Deserialize<CharacterBuildDocument>(json)
+        ?? throw new InvalidOperationException("Document deserialized as null.");
+
+    document.NormalizeCollections();
+
+    AssertNotNull(document.Languages, "Languages");
+    AssertNotNull(document.ClassLevels, "ClassLevels");
+    AssertNotNull(document.Feats, "Feats");
+    AssertNotNull(document.SkillAllocations, "SkillAllocations");
+}
+
 static void AssertEqual<T>(T expected, T actual, string label)
 {
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
     {
         throw new InvalidOperationException($"{label}: expected '{expected}', got '{actual}'.");
+    }
+}
+
+static void AssertNotNull(object? value, string label)
+{
+    if (value is null)
+    {
+        throw new InvalidOperationException($"{label}: expected non-null value.");
     }
 }

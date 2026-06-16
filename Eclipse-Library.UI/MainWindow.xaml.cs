@@ -228,7 +228,16 @@ namespace Eclipse_Library.UI
                 path = saveDialog.FileName;
             }
 
-            var document = new CharacterBuildDocument
+            var document = CreateCharacterBuildDocumentFromUi();
+
+            File.WriteAllText(path, JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
+            _currentCharacterFilePath = path;
+            SetStatus($"Saved character: {path}");
+        }
+
+        private CharacterBuildDocument CreateCharacterBuildDocumentFromUi()
+        {
+            return new CharacterBuildDocument
             {
                 SchemaVersion = 2,
                 HeroName = CharacterNameTextBox.Text,
@@ -277,10 +286,6 @@ namespace Eclipse_Library.UI
                     })
                     .ToList(),
             };
-
-            File.WriteAllText(path, JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true }));
-            _currentCharacterFilePath = path;
-            SetStatus($"Saved character: {path}");
         }
 
         private void LoadCharacter(string path)
@@ -303,6 +308,15 @@ namespace Eclipse_Library.UI
                 return;
             }
 
+            document.NormalizeCollections();
+            ApplyCharacterBuildDocumentToUi(document);
+            _currentCharacterFilePath = path;
+            RefreshCharacterBuild();
+            SetStatus($"Opened character: {path}");
+        }
+
+        private void ApplyCharacterBuildDocumentToUi(CharacterBuildDocument document)
+        {
             var settings = new HeroConfigurationSettings
             {
                 HeroName = document.HeroName,
@@ -365,9 +379,6 @@ namespace Eclipse_Library.UI
 
             RestoreSavedFeats(document.Feats);
             RestoreSavedSkillAllocations(document.SkillAllocations);
-            _currentCharacterFilePath = path;
-            RefreshCharacterBuild();
-            SetStatus($"Opened character: {path}");
         }
 
         private void RestoreSavedFeats(IEnumerable<CharacterFeatSaveDocument>? feats)
@@ -1814,6 +1825,7 @@ namespace Eclipse_Library.UI
 
             RefreshFeatsSummary();
             SetStatus($"Added feat '{feat.Name}'.");
+            RefreshCharacterBuild();
             return true;
         }
 
@@ -1826,6 +1838,7 @@ namespace Eclipse_Library.UI
 
             _selectedFeats.Remove(row);
             RefreshFeatsSummary();
+            RefreshCharacterBuild();
         }
 
         private void RemoveOneSelectedFeat_Click(object sender, RoutedEventArgs e)
@@ -1845,12 +1858,14 @@ namespace Eclipse_Library.UI
             }
 
             RefreshFeatsSummary();
+            RefreshCharacterBuild();
         }
 
         private void ClearFeats_Click(object sender, RoutedEventArgs e)
         {
             _selectedFeats.Clear();
             RefreshFeatsSummary();
+            RefreshCharacterBuild();
         }
 
         private void RefreshSkillRowsForRuleset()
@@ -2054,6 +2069,7 @@ namespace Eclipse_Library.UI
             row.SkillPointsSpent += 1;
             RefreshSkillDerivedFields();
             RefreshSkillPointsSummary();
+            RefreshCharacterBuild();
         }
 
         private void Skill_Decrement_Click(object sender, RoutedEventArgs e)
@@ -2071,6 +2087,7 @@ namespace Eclipse_Library.UI
             row.SkillPointsSpent -= 1;
             RefreshSkillDerivedFields();
             RefreshSkillPointsSummary();
+            RefreshCharacterBuild();
         }
 
         private bool ApplyTemplateMetadataFromControls()
@@ -3304,7 +3321,7 @@ namespace Eclipse_Library.UI
                 ApplyLevelAbilityScoreAdjustments(_lastCalculatedCharacter, inputs.TargetLevel);
                 DiagnosticsListBox.ItemsSource = null;
                 ClassesSummaryText.Text = "No class levels added.";
-                StatBlockTextBox.Text = BuildEmptyStatBlock(inputs, _lastCalculatedCharacter);
+                StatBlockTextBox.Text = BuildEmptyStatBlock(inputs, _lastCalculatedCharacter, _selectedFeats, _skillRows);
                 RefreshAbilityScoreModifiers();
                 RefreshDerivedCombatAndSaves();
                 RefreshClassDetailTabs();
@@ -3335,7 +3352,7 @@ namespace Eclipse_Library.UI
                     new BuildReplayOptions { RunIncrementalValidation = true, RunFinalValidation = true },
                     rulesConfig);
 
-                StatBlockTextBox.Text = BuildStatBlock(result, inputs, _currentTemplate, _classLevels);
+                StatBlockTextBox.Text = BuildStatBlock(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
                 _lastCalculatedCharacter = result.Character;
                 DiagnosticsListBox.ItemsSource = result.Diagnostics
                     .Select(x => $"[{x.Severity}] {x.Code}: {x.Message}")
@@ -3365,27 +3382,32 @@ namespace Eclipse_Library.UI
             }
         }
 
-        private string BuildEmptyStatBlock(CharacterInputs inputs, Character character)
+        private string BuildEmptyStatBlock(
+            CharacterInputs inputs,
+            Character character,
+            IEnumerable<SelectedFeatRow>? feats = null,
+            IEnumerable<SkillAllocationRow>? skills = null)
         {
-            return string.Join(Environment.NewLine, new[]
-            {
-                inputs.Name,
-                $"Player: {PlayerNameTextBox.Text.Trim()}",
-                $"Ruleset: {RulesetProfile.Get(_heroSettings.RulesetId).DisplayName}",
-                $"Target Level: {inputs.TargetLevel}",
-                $"Race: {inputs.Race}",
-                $"Size: {character.Size}",
-                "",
-                "Ability Scores",
-                FormatAbilityScoreLine(character, "Strength", "Str"),
-                FormatAbilityScoreLine(character, "Dexterity", "Dex"),
-                FormatAbilityScoreLine(character, "Constitution", "Con"),
-                FormatAbilityScoreLine(character, "Intelligence", "Int"),
-                FormatAbilityScoreLine(character, "Wisdom", "Wis"),
-                FormatAbilityScoreLine(character, "Charisma", "Cha"),
-                "",
-                "Add a class level to begin building this hero.",
-            });
+            var sb = new StringBuilder();
+            sb.AppendLine(inputs.Name);
+            sb.AppendLine($"Player: {PlayerNameTextBox.Text.Trim()}");
+            sb.AppendLine($"Ruleset: {RulesetProfile.Get(_heroSettings.RulesetId).DisplayName}");
+            sb.AppendLine($"Target Level: {inputs.TargetLevel}");
+            sb.AppendLine($"Race: {inputs.Race}");
+            sb.AppendLine($"Size: {character.Size}");
+            sb.AppendLine();
+            sb.AppendLine("Ability Scores");
+            sb.AppendLine(FormatAbilityScoreLine(character, "Strength", "Str"));
+            sb.AppendLine(FormatAbilityScoreLine(character, "Dexterity", "Dex"));
+            sb.AppendLine(FormatAbilityScoreLine(character, "Constitution", "Con"));
+            sb.AppendLine(FormatAbilityScoreLine(character, "Intelligence", "Int"));
+            sb.AppendLine(FormatAbilityScoreLine(character, "Wisdom", "Wis"));
+            sb.AppendLine(FormatAbilityScoreLine(character, "Charisma", "Cha"));
+            AppendFeatLines(sb, feats);
+            AppendSkillLines(sb, skills);
+            sb.AppendLine();
+            sb.AppendLine("Add a class level to begin building this hero.");
+            return sb.ToString();
         }
 
         private void RefreshClassesSummary()
@@ -3849,7 +3871,9 @@ namespace Eclipse_Library.UI
             CharacterBuildResult result,
             CharacterInputs inputs,
             CharacterTemplateDefinition template,
-            IEnumerable<CharacterClassLevelRow>? classLevels = null)
+            IEnumerable<CharacterClassLevelRow>? classLevels = null,
+            IEnumerable<SelectedFeatRow>? feats = null,
+            IEnumerable<SkillAllocationRow>? skills = null)
         {
             var character = result.Character;
             var levels = classLevels?.ToList() ?? new List<CharacterClassLevelRow>();
@@ -3921,6 +3945,8 @@ namespace Eclipse_Library.UI
             sb.AppendLine($"Fortitude: {FormatSigned(GetSaveTotal(character, SaveType.Fortitude, AbilityScores.GetModifier(abilityScores.Constitution)))}");
             sb.AppendLine($"Reflex: {FormatSigned(GetSaveTotal(character, SaveType.Reflex, AbilityScores.GetModifier(abilityScores.Dexterity)))}");
             sb.AppendLine($"Will: {FormatSigned(GetSaveTotal(character, SaveType.Will, AbilityScores.GetModifier(abilityScores.Wisdom)))}");
+            AppendFeatLines(sb, feats);
+            AppendSkillLines(sb, skills);
             sb.AppendLine();
             sb.AppendLine(character.GetSummary());
             sb.AppendLine();
@@ -3952,6 +3978,47 @@ namespace Eclipse_Library.UI
             }
 
             return sb.ToString();
+        }
+
+        private static void AppendFeatLines(StringBuilder sb, IEnumerable<SelectedFeatRow>? feats)
+        {
+            var selectedFeats = (feats ?? Enumerable.Empty<SelectedFeatRow>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Count > 0)
+                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (selectedFeats.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Feats");
+            foreach (var feat in selectedFeats)
+            {
+                var count = feat.Count > 1 ? $" x{feat.Count}" : "";
+                sb.AppendLine($"{feat.Name}{count}");
+            }
+        }
+
+        private static void AppendSkillLines(StringBuilder sb, IEnumerable<SkillAllocationRow>? skills)
+        {
+            var allocatedSkills = (skills ?? Enumerable.Empty<SkillAllocationRow>())
+                .Where(x => x.SkillPointsSpent > 0)
+                .OrderBy(x => x.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (allocatedSkills.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Skills");
+            foreach (var skill in allocatedSkills)
+            {
+                sb.AppendLine($"{skill.DisplayName} {skill.TotalModifierText} ({skill.RanksText} rank{(skill.Ranks == 1m ? "" : "s")}, {skill.AttributeShort}, {skill.SkillPointsSpent} SP)");
+            }
         }
 
         private static int GetSaveTotal(Character character, SaveType saveType, int abilityModifier)

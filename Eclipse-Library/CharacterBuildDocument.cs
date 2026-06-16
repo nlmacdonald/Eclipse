@@ -30,6 +30,15 @@ namespace Eclipse_Library
         public List<CharacterClassLevelSaveDocument> ClassLevels { get; set; } = new();
         public List<CharacterFeatSaveDocument> Feats { get; set; } = new();
         public List<CharacterSkillAllocationSaveDocument> SkillAllocations { get; set; } = new();
+
+        public void NormalizeCollections()
+        {
+            LevelAbilityScoreAdjustments ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            Languages ??= new List<string>();
+            ClassLevels ??= new List<CharacterClassLevelSaveDocument>();
+            Feats ??= new List<CharacterFeatSaveDocument>();
+            SkillAllocations ??= new List<CharacterSkillAllocationSaveDocument>();
+        }
     }
 
     public sealed class CharacterClassLevelSaveDocument
