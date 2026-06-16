@@ -129,13 +129,14 @@ public sealed class BuildValidationTests
     [TestMethod]
     public void ReportsInvalidFavoredClassBonus()
     {
+        var rulesConfig = CreatePathfinderFavoredBonusRules();
         var build = new CharacterBuild(
             new CharacterSeed("Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
             targetLevel: 1);
 
         build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Rogue", "6", "Sneaky", maxHitPoints: 6));
 
-        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+        var result = TestReplayerFactory.CreateStandardReplayer(rulesConfig).Replay(build, rulesConfig: rulesConfig);
 
         Assert.IsTrue(result.HasErrors);
         Assert.IsTrue(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_INVALID"));
@@ -144,15 +145,65 @@ public sealed class BuildValidationTests
     [TestMethod]
     public void AcceptsCustomFavoredClassBonusNote()
     {
+        var rulesConfig = CreatePathfinderFavoredBonusRules();
         var build = new CharacterBuild(
             new CharacterSeed("Custom Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
             targetLevel: 1);
 
         build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Rogue", "6", "Custom: alternate racial bonus", maxHitPoints: 6));
 
-        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+        var result = TestReplayerFactory.CreateStandardReplayer(rulesConfig).Replay(build, rulesConfig: rulesConfig);
 
         Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_INVALID"));
         Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "CLASS_LEVEL_HP_OUT_OF_RANGE"));
+    }
+
+    [TestMethod]
+    public void AcceptsRaceClassSpecificPathfinderFavoredBonus()
+    {
+        var rulesConfig = CreatePathfinderFavoredBonusRules();
+        var build = new CharacterBuild(
+            new CharacterSeed("Race Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Rogue", "6", "+1/2 trap sense bonus", maxHitPoints: 6));
+
+        var result = TestReplayerFactory.CreateStandardReplayer(rulesConfig).Replay(build, rulesConfig: rulesConfig);
+
+        Assert.IsFalse(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_INVALID"));
+    }
+
+    [TestMethod]
+    public void ReportsDndFavoredClassBonusAsUnsupportedWarning()
+    {
+        var build = new CharacterBuild(
+            new CharacterSeed("D&D Favored Bonus Test", new AbilityScores(10, 10, 10, 10, 10, 10)),
+            targetLevel: 1);
+
+        build.AddPurchase(1, new SetClassLevelDetailsPurchase(1, "Fighter", "10", "+1 Hit Point", maxHitPoints: 10));
+
+        var result = TestReplayerFactory.CreateStandardReplayer().Replay(build);
+
+        Assert.IsFalse(result.HasErrors);
+        Assert.IsTrue(result.Diagnostics.Any(x => x.Code == "FAVORED_CLASS_BONUS_NOT_SUPPORTED"));
+    }
+
+    private static BuildRulesConfig CreatePathfinderFavoredBonusRules()
+    {
+        var race = new RaceDefinitionDocument
+        {
+            Name = "Human",
+            Rules = new RaceRulesDocument
+            {
+                FavoredClassBonuses = new List<FavoredClassBonusOptionDocument>
+                {
+                    new() { ClassName = "Rogue", Bonus = "+1/2 trap sense bonus" },
+                },
+            },
+        };
+
+        var rulesConfig = RulesetProfile.Get(RulesetId.Pathfinder1E).CreateBuildRulesConfig();
+        rulesConfig.FavoredClassBonuses = FavoredClassBonusRulesConfig.FromRace(RulesetId.Pathfinder1E, race);
+        return rulesConfig;
     }
 }

@@ -5,6 +5,7 @@ namespace Eclipse_Library
         public RulesetId RulesetId { get; set; } = RulesetId.Dnd35;
         public SkillRulesConfig Skills { get; set; } = new SkillRulesConfig();
         public LevelProgressionRulesConfig LevelProgression { get; set; } = new LevelProgressionRulesConfig();
+        public FavoredClassBonusRulesConfig FavoredClassBonuses { get; set; } = new FavoredClassBonusRulesConfig();
         public SaveRulesConfig Saves { get; set; } = new SaveRulesConfig();
         public AbilityRulesConfig Abilities { get; set; } = new AbilityRulesConfig();
         public SpellRulesConfig Spells { get; set; } = new SpellRulesConfig();

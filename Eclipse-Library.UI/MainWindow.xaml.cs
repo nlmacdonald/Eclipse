@@ -374,6 +374,7 @@ namespace Eclipse_Library.UI
                 {
                     row.HpNote = savedLevel.HpNote;
                     row.FavoredBonus = savedLevel.FavoredBonus;
+                    ConfigureFavoredBonusOptions(row);
                 }
             }
 
@@ -1466,6 +1467,7 @@ namespace Eclipse_Library.UI
             }
 
             RefreshRacialAbilities();
+            RefreshFavoredBonusOptionsForClassLevels();
         }
 
         private void OpenRaceSelection_Click(object sender, RoutedEventArgs e)
@@ -1489,6 +1491,7 @@ namespace Eclipse_Library.UI
             SetSelectedRaceName(dialog.SelectedRace.Definition.Name);
             SetSelectedSize(GetRaceSize(dialog.SelectedRace.Definition));
             RefreshRacialAbilities();
+            RefreshFavoredBonusOptionsForClassLevels();
             RefreshAbilityScoreModifiers();
             RefreshFeatsSummary();
             RefreshSkillPointsSummary();
@@ -2586,6 +2589,7 @@ namespace Eclipse_Library.UI
                 template.Source,
                 BuildTemplateDescription(template),
                 purchases);
+            ConfigureFavoredBonusOptions(classLevel);
             classLevel.PropertyChanged += CharacterClassLevel_PropertyChanged;
             _classLevels.Add(classLevel);
 
@@ -2630,7 +2634,24 @@ namespace Eclipse_Library.UI
                     .Where(p => p is not null)
                     .Cast<TemplatePurchaseRow>()
                     .ToList());
+                ConfigureFavoredBonusOptions(_classLevels[i]);
             }
+        }
+
+        private void RefreshFavoredBonusOptionsForClassLevels()
+        {
+            foreach (var level in _classLevels)
+            {
+                ConfigureFavoredBonusOptions(level);
+            }
+        }
+
+        private void ConfigureFavoredBonusOptions(CharacterClassLevelRow row)
+        {
+            var rulesetId = GetRulesetIdForTemplate(row.TemplateId) ?? _currentTemplate.RulesetId;
+            var selectedRace = GetSelectedRaceDefinition();
+            var rules = FavoredClassBonusRulesConfig.FromRace(rulesetId, selectedRace);
+            row.SetFavoredBonusOptions(rules.GetAllowedBonuses(row.TemplateName), rulesetId == RulesetId.Pathfinder1E);
         }
 
         private RulesetId? GetRulesetIdForTemplate(Guid templateId)
@@ -2646,6 +2667,13 @@ namespace Eclipse_Library.UI
 
         private void CharacterClassLevel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName == nameof(CharacterClassLevelRow.FavoredBonus)
+                || e.PropertyName == nameof(CharacterClassLevelRow.HpNote))
+            {
+                RefreshHitPointTotalFromClassLevels();
+                RefreshSkillPointsSummary();
+            }
+
             RefreshCharacterBuild();
         }
 
@@ -3235,7 +3263,8 @@ namespace Eclipse_Library.UI
                 var rulesConfig = _buildReplayFactory.CreateRulesConfig(
                     _heroSettings,
                     _levelProgressionCatalog,
-                    _pathfinderProgression);
+                    _pathfinderProgression,
+                    selectedRace);
                 var result = _buildReplayFactory.Replay(build, rulesConfig);
 
                 StatBlockTextBox.Text = _statBlockFormatter.Build(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
@@ -3494,7 +3523,9 @@ namespace Eclipse_Library.UI
                 return;
             }
 
-            var baseHp = _classLevels.Sum(row => ReadIntOrNull(row.HpNote) ?? 0);
+            var baseHp = _classLevels.Sum(row =>
+                (ReadIntOrNull(row.HpNote) ?? 0)
+                + (SetClassLevelDetailsPurchase.IsHitPointFavoredBonus(row.FavoredBonus) ? 1 : 0));
             var conMod = AbilityScores.GetModifier(ReadIntOrNull(ConstitutionTextBox.Text) ?? 10);
             HitPointsTextBox.Text = (baseHp + (_classLevels.Count * conMod)).ToString();
         }
@@ -4189,7 +4220,9 @@ namespace Eclipse_Library.UI
     {
         private int _characterLevel;
         private string _hpNote = "";
-        private string _favoredBonus = "+1 Hit Point";
+        private string _favoredBonus = "";
+        private bool _isFavoredBonusEnabled;
+        private IReadOnlyList<string> _favoredBonusOptions = Array.Empty<string>();
         private IReadOnlyList<TemplatePurchaseRow> _purchases;
 
         public CharacterClassLevelRow(
@@ -4307,6 +4340,68 @@ namespace Eclipse_Library.UI
                 _favoredBonus = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoredBonus)));
             }
+        }
+
+        public IReadOnlyList<string> FavoredBonusOptions
+        {
+            get => _favoredBonusOptions;
+            private set
+            {
+                _favoredBonusOptions = value ?? Array.Empty<string>();
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoredBonusOptions)));
+            }
+        }
+
+        public bool IsFavoredBonusEnabled
+        {
+            get => _isFavoredBonusEnabled;
+            private set
+            {
+                if (_isFavoredBonusEnabled == value)
+                {
+                    return;
+                }
+
+                _isFavoredBonusEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFavoredBonusEnabled)));
+            }
+        }
+
+        public void SetFavoredBonusOptions(IReadOnlyList<string> options, bool isEnabled)
+        {
+            var normalized = (options ?? Array.Empty<string>())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (isEnabled)
+            {
+                if (!string.IsNullOrWhiteSpace(_favoredBonus)
+                    && !normalized.Any(x => string.Equals(x, _favoredBonus, StringComparison.OrdinalIgnoreCase))
+                    && !SetClassLevelDetailsPurchase.IsCustomFavoredBonus(_favoredBonus))
+                {
+                    normalized.Add(_favoredBonus);
+                }
+
+                normalized.Add("Custom: ");
+                FavoredBonusOptions = normalized;
+
+                if (string.IsNullOrWhiteSpace(_favoredBonus) && normalized.Count > 0)
+                {
+                    FavoredBonus = normalized[0];
+                }
+            }
+            else
+            {
+                FavoredBonusOptions = Array.Empty<string>();
+                if (!string.IsNullOrWhiteSpace(_favoredBonus))
+                {
+                    FavoredBonus = "";
+                }
+            }
+
+            IsFavoredBonusEnabled = isEnabled;
         }
 
         public void ReplacePurchases(IReadOnlyList<TemplatePurchaseRow> purchases)

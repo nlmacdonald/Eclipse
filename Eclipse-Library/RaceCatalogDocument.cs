@@ -78,8 +78,24 @@ namespace Eclipse_Library
         [DataMember(Name = "favoredClass", IsRequired = false, EmitDefaultValue = false)]
         public string? FavoredClass { get; set; }
 
+        [DataMember(Name = "favoredClassBonuses", IsRequired = false, EmitDefaultValue = false)]
+        public List<FavoredClassBonusOptionDocument>? FavoredClassBonuses { get; set; }
+
         [DataMember(Name = "traits", IsRequired = true)]
         public List<RaceTraitDocument> Traits { get; set; } = new();
+    }
+
+    [DataContract]
+    public sealed class FavoredClassBonusOptionDocument
+    {
+        [DataMember(Name = "className", IsRequired = false, EmitDefaultValue = false)]
+        public string? ClassName { get; set; }
+
+        [DataMember(Name = "bonus", IsRequired = true)]
+        public string Bonus { get; set; } = "";
+
+        [DataMember(Name = "description", IsRequired = false, EmitDefaultValue = false)]
+        public string? Description { get; set; }
     }
 
     [DataContract]

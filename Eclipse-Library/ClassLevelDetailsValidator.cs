@@ -7,6 +7,18 @@ namespace Eclipse_Library
 {
     public sealed class ClassLevelDetailsValidator : IFinalBuildValidator, IIdentifiedValidator
     {
+        private readonly FavoredClassBonusRulesConfig _favoredClassBonuses;
+
+        public ClassLevelDetailsValidator()
+            : this(new FavoredClassBonusRulesConfig())
+        {
+        }
+
+        public ClassLevelDetailsValidator(FavoredClassBonusRulesConfig favoredClassBonuses)
+        {
+            _favoredClassBonuses = favoredClassBonuses ?? throw new ArgumentNullException(nameof(favoredClassBonuses));
+        }
+
         public string ValidatorId => "CLASS_LEVEL_DETAILS";
 
         public IEnumerable<BuildDiagnostic> Validate(FinalBuildValidationContext context)
@@ -23,7 +35,7 @@ namespace Eclipse_Library
                     continue;
                 }
 
-                foreach (var diagnostic in ValidateDetails(context, record, details))
+                foreach (var diagnostic in ValidateDetails(context, record, details, _favoredClassBonuses))
                 {
                     yield return diagnostic;
                 }
@@ -33,7 +45,8 @@ namespace Eclipse_Library
         private static IEnumerable<BuildDiagnostic> ValidateDetails(
             FinalBuildValidationContext context,
             AppliedPurchaseRecord record,
-            SetClassLevelDetailsPurchase details)
+            SetClassLevelDetailsPurchase details,
+            FavoredClassBonusRulesConfig favoredClassBonuses)
         {
             var diagnosticContext = new BuildDiagnosticContext(
                 BuildDiagnosticStage.Final,
@@ -61,21 +74,27 @@ namespace Eclipse_Library
                     diagnosticContext);
             }
 
-            if (!IsValidFavoredBonus(details.FavoredBonus))
+            if (!favoredClassBonuses.IsAllowed(details.TemplateName, details.FavoredBonus))
             {
-                yield return new BuildDiagnostic(
-                    BuildDiagnosticSeverity.Error,
-                    "FAVORED_CLASS_BONUS_INVALID",
-                    $"Character level {details.CharacterLevel} ({details.TemplateName}) has an unsupported favored class bonus. Use +1 Hit Point, +1 Skill Point, or Custom: <note>.",
-                    diagnosticContext);
+                if (favoredClassBonuses.RulesetId == RulesetId.Pathfinder1E)
+                {
+                    var allowed = favoredClassBonuses.GetAllowedBonuses(details.TemplateName);
+                    var allowedText = allowed.Count == 0 ? "a configured Pathfinder favored class bonus" : string.Join(", ", allowed);
+                    yield return new BuildDiagnostic(
+                        BuildDiagnosticSeverity.Error,
+                        "FAVORED_CLASS_BONUS_INVALID",
+                        $"Character level {details.CharacterLevel} ({details.TemplateName}) has an unsupported favored class bonus for {favoredClassBonuses.RaceName}. Use {allowedText}, or Custom: <note>.",
+                        diagnosticContext);
+                }
+                else
+                {
+                    yield return new BuildDiagnostic(
+                        BuildDiagnosticSeverity.Warning,
+                        "FAVORED_CLASS_BONUS_NOT_SUPPORTED",
+                        $"Character level {details.CharacterLevel} ({details.TemplateName}) has a favored class bonus, but favored class bonuses are only enabled for Pathfinder 1e.",
+                        diagnosticContext);
+                }
             }
-        }
-
-        private static bool IsValidFavoredBonus(string favoredBonus)
-        {
-            return SetClassLevelDetailsPurchase.IsHitPointFavoredBonus(favoredBonus)
-                || SetClassLevelDetailsPurchase.IsSkillPointFavoredBonus(favoredBonus)
-                || SetClassLevelDetailsPurchase.IsCustomFavoredBonus(favoredBonus);
         }
     }
 }

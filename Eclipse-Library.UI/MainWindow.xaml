@@ -394,13 +394,12 @@
                                                             </TextBox>
 
                                                             <ComboBox Grid.Column="3"
-                                                                      Text="{Binding FavoredBonus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                      ItemsSource="{Binding FavoredBonusOptions}"
+                                                                      SelectedItem="{Binding FavoredBonus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                       IsEditable="True"
+                                                                      IsEnabled="{Binding IsFavoredBonusEnabled}"
                                                                       Margin="0"
                                                                       MinHeight="24">
-                                                                <ComboBoxItem Content="+1 Hit Point" />
-                                                                <ComboBoxItem Content="+1 Skill Rank" />
-                                                                <ComboBoxItem Content="None" />
                                                             </ComboBox>
 
                                                             <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">

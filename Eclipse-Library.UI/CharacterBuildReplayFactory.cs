@@ -7,7 +7,8 @@ namespace Eclipse_Library.UI
         public BuildRulesConfig CreateRulesConfig(
             HeroConfigurationSettings heroSettings,
             LevelProgressionCatalogDocument? levelProgressionCatalog = null,
-            PathfinderXpProgression? pathfinderProgression = null)
+            PathfinderXpProgression? pathfinderProgression = null,
+            RaceDefinitionDocument? selectedRace = null)
         {
             var config = RulesetProfile.Get(heroSettings.RulesetId).CreateBuildRulesConfig();
 
@@ -22,6 +23,9 @@ namespace Eclipse_Library.UI
                 levelProgressionCatalog,
                 heroSettings.RulesetId,
                 pathfinderProgression);
+            config.FavoredClassBonuses = FavoredClassBonusRulesConfig.FromRace(
+                heroSettings.RulesetId,
+                selectedRace);
 
             switch (heroSettings.SkillRankCapMode)
             {
@@ -68,7 +72,7 @@ namespace Eclipse_Library.UI
             var finalValidators = new IFinalBuildValidator[]
             {
                 new CpOverspendFinalValidator(),
-                new ClassLevelDetailsValidator(),
+                new ClassLevelDetailsValidator(rulesConfig.FavoredClassBonuses),
                 new SelectedFeatAllowanceValidator(rulesConfig.LevelProgression),
                 new SkillPointAllowanceValidator(rulesConfig.Skills),
                 new RuleValidatorFinalAdapter(new AbilityPrerequisiteValidator()),
