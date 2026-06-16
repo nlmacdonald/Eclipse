@@ -42,6 +42,7 @@ namespace Eclipse_Library
             {
                 config.Skills.IrrelevantSkillRankMultiplier = 1m;
                 config.Skills.EnableIrrelevantToRelevantPromotion = false;
+                config.Skills.UseFirstCharacterLevelSkillPointMultiplier = false;
             }
 
             return config;

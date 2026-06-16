@@ -6,16 +6,16 @@ namespace Eclipse_Library
 {
     public sealed class SelectedFeatAllowanceValidator : IFinalBuildValidator, IIdentifiedValidator
     {
-        private readonly Func<int, int> _featsGrantedByLevel;
+        private readonly LevelProgressionRulesConfig _levelProgression;
 
         public SelectedFeatAllowanceValidator()
-            : this(GetDefaultFeatsGrantedByLevel)
+            : this(new LevelProgressionRulesConfig())
         {
         }
 
-        public SelectedFeatAllowanceValidator(Func<int, int> featsGrantedByLevel)
+        public SelectedFeatAllowanceValidator(LevelProgressionRulesConfig levelProgression)
         {
-            _featsGrantedByLevel = featsGrantedByLevel ?? throw new ArgumentNullException(nameof(featsGrantedByLevel));
+            _levelProgression = levelProgression ?? throw new ArgumentNullException(nameof(levelProgression));
         }
 
         public string ValidatorId => "SELECTED_FEAT_ALLOWANCE";
@@ -29,7 +29,7 @@ namespace Eclipse_Library
 
             var character = context.FinalCharacterSnapshot;
             var selectedCount = character.SelectedFeats.Values.Sum();
-            var regularFeats = Math.Max(0, _featsGrantedByLevel(character.Level));
+            var regularFeats = Math.Max(0, _levelProgression.GetFeatsGrantedByLevel(character.Level));
             var availableFeats = regularFeats + character.BonusFeats;
 
             if (selectedCount <= availableFeats)
@@ -44,10 +44,5 @@ namespace Eclipse_Library
                 new BuildDiagnosticContext(BuildDiagnosticStage.Final, context.Build.TargetLevel));
         }
 
-        private static int GetDefaultFeatsGrantedByLevel(int level)
-        {
-            level = Math.Max(1, level);
-            return 1 + ((level - 1) / 3);
-        }
     }
 }

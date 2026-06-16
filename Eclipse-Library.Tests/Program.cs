@@ -15,6 +15,9 @@ var tests = new (string Name, Action Run)[]
     ("BuildReplayer reports selected feat allowance diagnostics", BuildReplayerReportsSelectedFeatAllowanceDiagnostics),
     ("BuildReplayer reports skill point allowance diagnostics", BuildReplayerReportsSkillPointAllowanceDiagnostics),
     ("BuildReplayer accepts skill point allowance from template and Intelligence", BuildReplayerAcceptsSkillPointAllowanceFromTemplateAndIntelligence),
+    ("Level progression rules use configured feat table", LevelProgressionRulesUseConfiguredFeatTable),
+    ("Level progression rules use ruleset fallback feat cadence", LevelProgressionRulesUseRulesetFallbackFeatCadence),
+    ("Pathfinder profile uses per-level Intelligence skill points", PathfinderProfileUsesPerLevelIntelligenceSkillPoints),
 };
 
 var failures = new List<string>();
@@ -327,9 +330,69 @@ static void BuildReplayerAcceptsSkillPointAllowanceFromTemplateAndIntelligence()
     AssertEqual(false, result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"), "SKILL_POINTS_OVERSPENT diagnostic absent");
 }
 
-static BuildReplayer CreateStandardReplayer()
+static void LevelProgressionRulesUseConfiguredFeatTable()
 {
-    var rulesConfig = new BuildRulesConfig();
+    var catalog = new LevelProgressionCatalogDocument
+    {
+        Rulesets =
+        {
+            new RulesetLevelProgressionDocument
+            {
+                RulesetId = RulesetId.Dnd35,
+                Tables =
+                {
+                    new LevelProgressionTableDocument
+                    {
+                        Levels =
+                        {
+                            new LevelProgressionLevelDocument { Level = 1, GrantsFeat = true },
+                            new LevelProgressionLevelDocument { Level = 2, GrantsFeat = true },
+                            new LevelProgressionLevelDocument { Level = 3 },
+                        },
+                    },
+                },
+            },
+        },
+    };
+
+    var rules = LevelProgressionRulesConfig.FromCatalog(catalog, RulesetId.Dnd35);
+
+    AssertEqual(2, rules.GetFeatsGrantedByLevel(3), "Configured feat table count");
+}
+
+static void LevelProgressionRulesUseRulesetFallbackFeatCadence()
+{
+    var dndRules = LevelProgressionRulesConfig.FromCatalog(null, RulesetId.Dnd35);
+    var pathfinderRules = LevelProgressionRulesConfig.FromCatalog(null, RulesetId.Pathfinder1E);
+
+    AssertEqual(2, dndRules.GetFeatsGrantedByLevel(5), "D&D fallback feat count at 5");
+    AssertEqual(3, pathfinderRules.GetFeatsGrantedByLevel(5), "Pathfinder fallback feat count at 5");
+}
+
+static void PathfinderProfileUsesPerLevelIntelligenceSkillPoints()
+{
+    var rulesConfig = RulesetProfile.Get(RulesetId.Pathfinder1E).CreateBuildRulesConfig();
+    var build = new CharacterBuild(
+        new CharacterSeed("Pathfinder Skill Test", new AbilityScores(10, 10, 10, 14, 10, 10)),
+        targetLevel: 2);
+
+    build.AddPurchase(1, new AllocateSkillRanksPurchase("Perception", 4, isRelevantSkill: true, rankMultiplier: 1m));
+
+    var result = CreateStandardReplayer(rulesConfig).Replay(
+        build,
+        cpProgression: new TableCpProgression(new Dictionary<int, int>
+        {
+            [1] = 24,
+            [2] = 48,
+        }),
+        rulesConfig: rulesConfig);
+
+    AssertEqual(false, result.Diagnostics.Any(x => x.Code == "SKILL_POINTS_OVERSPENT"), "Pathfinder skill point allowance");
+}
+
+static BuildReplayer CreateStandardReplayer(BuildRulesConfig? rulesConfig = null)
+{
+    rulesConfig ??= new BuildRulesConfig();
     var stepValidators = new IBuildStepValidator[]
     {
         new WarcraftCapByLevelValidator(),
@@ -340,7 +403,7 @@ static BuildReplayer CreateStandardReplayer()
     var finalValidators = new IFinalBuildValidator[]
     {
         new CpOverspendFinalValidator(),
-        new SelectedFeatAllowanceValidator(),
+        new SelectedFeatAllowanceValidator(rulesConfig.LevelProgression),
         new SkillPointAllowanceValidator(rulesConfig.Skills),
     };
 

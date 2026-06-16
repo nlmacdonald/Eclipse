@@ -3222,7 +3222,10 @@ namespace Eclipse_Library.UI
                     _selectedFeats,
                     _skillRows);
 
-                var rulesConfig = _buildReplayFactory.CreateRulesConfig(_heroSettings);
+                var rulesConfig = _buildReplayFactory.CreateRulesConfig(
+                    _heroSettings,
+                    _levelProgressionCatalog,
+                    _pathfinderProgression);
                 var result = _buildReplayFactory.Replay(build, rulesConfig);
 
                 StatBlockTextBox.Text = _statBlockFormatter.Build(result, inputs, _currentTemplate, _classLevels, _selectedFeats, _skillRows);
@@ -3474,29 +3477,7 @@ namespace Eclipse_Library.UI
 
         private IReadOnlyList<LevelProgressionLevelDocument> GetSelectedLevelTable()
         {
-            var empty = (IReadOnlyList<LevelProgressionLevelDocument>)Array.Empty<LevelProgressionLevelDocument>();
-            if (_levelProgressionCatalog is null)
-            {
-                return empty;
-            }
-
-            var ruleset = _levelProgressionCatalog.Rulesets.FirstOrDefault(x => x.RulesetId == _currentTemplate.RulesetId);
-            if (ruleset is null)
-            {
-                return empty;
-            }
-
-            LevelProgressionTableDocument? table = null;
-            if (_currentTemplate.RulesetId == RulesetId.Pathfinder1E)
-            {
-                table = ruleset.Tables.FirstOrDefault(x => x.Progression == _pathfinderProgression);
-            }
-            else
-            {
-                table = ruleset.Tables.FirstOrDefault();
-            }
-
-            return (table?.Levels ?? new List<LevelProgressionLevelDocument>()).OrderBy(x => x.Level).ToList();
+            return GetLevelProgressionRules().GetLevels();
         }
 
         private static int ComputeLevelFromXp(int xpTotal, IReadOnlyList<LevelProgressionLevelDocument> table)
@@ -3556,14 +3537,15 @@ namespace Eclipse_Library.UI
 
         private int GetFeatsGrantedByLevel(int level)
         {
-            var table = GetSelectedLevelTable();
-            if (table.Count == 0)
-            {
-                // Fallback: 1 feat at level 1, +1 every 3 levels (D&D-ish).
-                return 1 + (Math.Max(1, level) - 1) / 3;
-            }
+            return GetLevelProgressionRules().GetFeatsGrantedByLevel(level);
+        }
 
-            return table.Where(x => x.Level >= 1 && x.Level <= level).Count(x => x.GrantsFeat);
+        private LevelProgressionRulesConfig GetLevelProgressionRules()
+        {
+            return LevelProgressionRulesConfig.FromCatalog(
+                _levelProgressionCatalog,
+                _currentTemplate.RulesetId,
+                _pathfinderProgression);
         }
 
         private int GetRemainingSkillPoints()

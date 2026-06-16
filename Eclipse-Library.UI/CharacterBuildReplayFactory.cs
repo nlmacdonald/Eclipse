@@ -4,14 +4,24 @@ namespace Eclipse_Library.UI
 {
     public sealed class CharacterBuildReplayFactory
     {
-        public BuildRulesConfig CreateRulesConfig(HeroConfigurationSettings heroSettings)
+        public BuildRulesConfig CreateRulesConfig(
+            HeroConfigurationSettings heroSettings,
+            LevelProgressionCatalogDocument? levelProgressionCatalog = null,
+            PathfinderXpProgression? pathfinderProgression = null)
         {
             var config = RulesetProfile.Get(heroSettings.RulesetId).CreateBuildRulesConfig();
 
             config.Skills.EnableIrrelevantToRelevantPromotion =
                 !heroSettings.SuppressIrrelevantSkillPromotion
                 && config.Skills.EnableIrrelevantToRelevantPromotion;
-            config.Skills.UseFirstCharacterLevelSkillPointMultiplier = heroSettings.UseFirstCharacterLevelSkillPointMultiplier;
+            config.Skills.UseFirstCharacterLevelSkillPointMultiplier =
+                heroSettings.RulesetId == RulesetId.Pathfinder1E
+                    ? config.Skills.UseFirstCharacterLevelSkillPointMultiplier
+                    : heroSettings.UseFirstCharacterLevelSkillPointMultiplier;
+            config.LevelProgression = LevelProgressionRulesConfig.FromCatalog(
+                levelProgressionCatalog,
+                heroSettings.RulesetId,
+                pathfinderProgression);
 
             switch (heroSettings.SkillRankCapMode)
             {
@@ -58,7 +68,7 @@ namespace Eclipse_Library.UI
             var finalValidators = new IFinalBuildValidator[]
             {
                 new CpOverspendFinalValidator(),
-                new SelectedFeatAllowanceValidator(),
+                new SelectedFeatAllowanceValidator(rulesConfig.LevelProgression),
                 new SkillPointAllowanceValidator(rulesConfig.Skills),
                 new RuleValidatorFinalAdapter(new AbilityPrerequisiteValidator()),
             };
