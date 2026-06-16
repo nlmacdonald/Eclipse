@@ -32,6 +32,8 @@ namespace Eclipse_Library.UI
         private readonly StatBlockFormatter _statBlockFormatter = new();
         private readonly CharacterBuildReplayFactory _buildReplayFactory = new();
         private readonly CharacterBuildAssembler _buildAssembler = new();
+        private readonly CatalogPathResolver _catalogPathResolver = new();
+        private readonly TemplateCatalogStore _templateCatalogStore = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -539,7 +541,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", "skills.catalog.json");
+                var path = _catalogPathResolver.FindDocsFile("skills.catalog.json");
                 _skillCatalog = SkillCatalogJson.LoadFromFile(path);
             }
             catch
@@ -552,7 +554,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", "feats.catalog.json");
+                var path = _catalogPathResolver.FindDocsFile("feats.catalog.json");
                 _featCatalog = FeatCatalogJson.LoadFromFile(path);
             }
             catch
@@ -565,7 +567,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", GetRaceCatalogFileName(_currentTemplate.RulesetId));
+                var path = _catalogPathResolver.FindDocsFile(GetRaceCatalogFileName(_currentTemplate.RulesetId));
                 _raceCatalog = RaceCatalogJson.LoadFromFile(path);
             }
             catch
@@ -578,7 +580,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", "race-abilities.catalog.json");
+                var path = _catalogPathResolver.FindDocsFile("race-abilities.catalog.json");
                 _raceAbilityCatalog = RaceAbilityCatalogJson.LoadFromFile(path);
             }
             catch
@@ -602,7 +604,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", "languages.catalog.json");
+                var path = _catalogPathResolver.FindDocsFile("languages.catalog.json");
                 _languageCatalog = LanguageCatalogJson.LoadFromFile(path);
                 _languages = _languageCatalog.Languages;
             }
@@ -619,7 +621,7 @@ namespace Eclipse_Library.UI
 
             try
             {
-                var path = FindUpward("docs", "alignments.catalog.json");
+                var path = _catalogPathResolver.FindDocsFile("alignments.catalog.json");
                 _alignmentCatalog = AlignmentCatalogJson.LoadFromFile(path);
                 foreach (var alignment in _alignmentCatalog.ToDefinitions())
                 {
@@ -654,7 +656,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = FindUpward("docs", "leveling.config.json");
+                var path = _catalogPathResolver.FindDocsFile("leveling.config.json");
                 _levelProgressionCatalog = LevelProgressionJson.LoadFromFile(path);
                 SetStatus($"Loaded leveling config from {path}.");
             }
@@ -672,40 +674,7 @@ namespace Eclipse_Library.UI
 
             try
             {
-                var officialPath = FindUpward("docs", "templates.official.json");
-                var customPath = FindUpward("docs", "templates.custom.json");
-
-                if (File.Exists(officialPath))
-                {
-                    foreach (var template in (TemplateCatalogJson.LoadFromFile(officialPath).Templates ?? new List<ClassTemplateDocument>())
-                        .Where(template => ShouldShowTemplateForCurrentRuleset(template) && ShouldShowTemplateSource(GetTemplateSourceId(template, "official"))))
-                    {
-                        _availableTemplates.Add(new ClassTemplateListItem(template, source: GetTemplateSourceId(template, "official")));
-                    }
-                }
-
-                if (File.Exists(customPath))
-                {
-                    foreach (var template in (TemplateCatalogJson.LoadFromFile(customPath).Templates ?? new List<ClassTemplateDocument>())
-                        .Where(template => ShouldShowTemplateForCurrentRuleset(template) && ShouldShowTemplateSource(GetTemplateSourceId(template, "custom"))))
-                    {
-                        _availableTemplates.Add(new ClassTemplateListItem(template, source: GetTemplateSourceId(template, "custom")));
-                    }
-                }
-                else
-                {
-                    // Create an empty custom catalog on first run.
-                    TemplateCatalogJson.SaveToFile(customPath, new TemplateCatalogDocument { SchemaVersion = 1, Templates = new List<ClassTemplateDocument>() });
-                }
-
-                // Prefer official/custom sort, then name.
-                var sorted = _availableTemplates
-                    .OrderBy(x => x.Source, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                _availableTemplates.Clear();
-                foreach (var item in sorted)
+                foreach (var item in _templateCatalogStore.LoadTemplates(_currentTemplate.RulesetId, _includedTemplateSources))
                 {
                     _availableTemplates.Add(item);
                 }
@@ -717,64 +686,6 @@ namespace Eclipse_Library.UI
             {
                 SetStatus($"Could not load template library: {ex.Message}");
             }
-        }
-
-        private bool ShouldShowTemplateForCurrentRuleset(ClassTemplateDocument template)
-        {
-            return template.RulesetId == _currentTemplate.RulesetId;
-        }
-
-        private bool ShouldShowTemplateSource(string source)
-        {
-            return IsRequiredResourceSource(source)
-                || _includedTemplateSources.Count == 0
-                || _includedTemplateSources.Contains(source);
-        }
-
-        private static bool IsRequiredResourceSource(string source)
-        {
-            return string.Equals(source, ResourceSourceIds.CoreRules, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(source, ResourceSourceIds.Eclipse, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(source, ResourceSourceIds.PlayersHandbook, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static string GetTemplateSourceId(ClassTemplateDocument template, string catalogSource)
-        {
-            if (template.Source is not null && !string.IsNullOrWhiteSpace(template.Source.Id))
-            {
-                return template.Source.Id.Trim();
-            }
-
-            return string.Equals(catalogSource, "official", StringComparison.OrdinalIgnoreCase)
-                ? ResourceSourceIds.PlayersHandbook
-                : ResourceSourceIds.Custom;
-        }
-
-        private static string FindUpward(params string[] relativeParts)
-        {
-            var directory = new DirectoryInfo(AppContext.BaseDirectory);
-            while (directory is not null)
-            {
-                // Special-case docs to allow creating files (custom templates) even when the file doesn't exist yet.
-                if (relativeParts.Length >= 1 && string.Equals(relativeParts[0], "docs", StringComparison.OrdinalIgnoreCase))
-                {
-                    var docsDir = Path.Combine(directory.FullName, "docs");
-                    if (Directory.Exists(docsDir))
-                    {
-                        return Path.Combine(new[] { docsDir }.Concat(relativeParts.Skip(1)).ToArray());
-                    }
-                }
-
-                var candidate = Path.Combine(new[] { directory.FullName }.Concat(relativeParts).ToArray());
-                if (File.Exists(candidate))
-                {
-                    return candidate;
-                }
-
-                directory = directory.Parent;
-            }
-
-            return Path.GetFullPath(Path.Combine(new[] { AppContext.BaseDirectory }.Concat(relativeParts).ToArray()));
         }
 
         private void LoadRuleset()
@@ -900,11 +811,6 @@ namespace Eclipse_Library.UI
 
             try
             {
-                var customPath = FindUpward("docs", "templates.custom.json");
-                var catalog = File.Exists(customPath)
-                    ? TemplateCatalogJson.LoadFromFile(customPath)
-                    : new TemplateCatalogDocument { SchemaVersion = 1, Templates = new List<ClassTemplateDocument>() };
-
                 var template = new ClassTemplateDocument
                 {
                     Id = _currentTemplateIsImmutable ? Guid.NewGuid() : _currentTemplate.Id,
@@ -934,18 +840,7 @@ namespace Eclipse_Library.UI
                         .ToList(),
                 };
 
-                catalog.Templates ??= new List<ClassTemplateDocument>();
-                var existingIndex = catalog.Templates.FindIndex(x => x.Id == template.Id);
-                if (existingIndex >= 0)
-                {
-                    catalog.Templates[existingIndex] = template;
-                }
-                else
-                {
-                    catalog.Templates.Add(template);
-                }
-
-                TemplateCatalogJson.SaveToFile(customPath, catalog);
+                _templateCatalogStore.SaveCustomTemplate(template);
                 _currentTemplateIsImmutable = false;
                 _currentTemplate = new CharacterTemplateDefinition(template.Id, template.Name, template.RulesetId, template.Tag, template.MaxClassLevels)
                 {
@@ -4186,23 +4081,6 @@ namespace Eclipse_Library.UI
         public string Description { get; }
         public Func<IPurchase> CreatePurchase { get; }
         public TemplatePurchaseDocument? Document { get; }
-    }
-
-    public sealed class ClassTemplateListItem
-    {
-        public ClassTemplateListItem(ClassTemplateDocument document, string source)
-        {
-            Document = document ?? throw new ArgumentNullException(nameof(document));
-            Source = source ?? throw new ArgumentNullException(nameof(source));
-        }
-
-        public ClassTemplateDocument Document { get; }
-        public string Source { get; }
-        public string Name => Document.Name;
-        public TemplateTag Tag => Document.Tag;
-        public int? MaxClassLevels => Document.MaxClassLevels;
-        public RulesetId RulesetId => Document.RulesetId;
-        public string DisplayName => $"{Document.Name} [{Document.Tag}, {Source}]";
     }
 
     public sealed class TemplateSegmentRow : INotifyPropertyChanged
