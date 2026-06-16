@@ -32,8 +32,8 @@ namespace Eclipse_Library.UI
         private readonly StatBlockFormatter _statBlockFormatter = new();
         private readonly CharacterBuildReplayFactory _buildReplayFactory = new();
         private readonly CharacterBuildAssembler _buildAssembler = new();
-        private readonly CatalogPathResolver _catalogPathResolver = new();
         private readonly TemplateCatalogStore _templateCatalogStore = new();
+        private readonly RulesCatalogStore _rulesCatalogStore = new();
         private AbilityRuleset? _ruleset;
         private List<AbilityDefinition> _allAbilities = new();
         private CharacterTemplateDefinition _currentTemplate = new();
@@ -541,8 +541,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("skills.catalog.json");
-                _skillCatalog = SkillCatalogJson.LoadFromFile(path);
+                _skillCatalog = _rulesCatalogStore.LoadSkillCatalog();
             }
             catch
             {
@@ -554,8 +553,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("feats.catalog.json");
-                _featCatalog = FeatCatalogJson.LoadFromFile(path);
+                _featCatalog = _rulesCatalogStore.LoadFeatCatalog();
             }
             catch
             {
@@ -567,8 +565,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile(GetRaceCatalogFileName(_currentTemplate.RulesetId));
-                _raceCatalog = RaceCatalogJson.LoadFromFile(path);
+                _raceCatalog = _rulesCatalogStore.LoadRaceCatalog(_currentTemplate.RulesetId);
             }
             catch
             {
@@ -580,8 +577,7 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("race-abilities.catalog.json");
-                _raceAbilityCatalog = RaceAbilityCatalogJson.LoadFromFile(path);
+                _raceAbilityCatalog = _rulesCatalogStore.LoadRaceAbilityCatalog();
             }
             catch
             {
@@ -589,23 +585,11 @@ namespace Eclipse_Library.UI
             }
         }
 
-        private static string GetRaceCatalogFileName(RulesetId rulesetId)
-        {
-            return rulesetId switch
-            {
-                RulesetId.Dnd30 => "races.dnd30.catalog.json",
-                RulesetId.Dnd35 => "races.dnd35.catalog.json",
-                RulesetId.Pathfinder1E => "races.pathfinder1e.catalog.json",
-                _ => "races.dnd35.catalog.json",
-            };
-        }
-
         private void LoadLanguageCatalog()
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("languages.catalog.json");
-                _languageCatalog = LanguageCatalogJson.LoadFromFile(path);
+                _languageCatalog = _rulesCatalogStore.LoadLanguageCatalog();
                 _languages = _languageCatalog.Languages;
             }
             catch
@@ -621,8 +605,7 @@ namespace Eclipse_Library.UI
 
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("alignments.catalog.json");
-                _alignmentCatalog = AlignmentCatalogJson.LoadFromFile(path);
+                _alignmentCatalog = _rulesCatalogStore.LoadAlignmentCatalog();
                 foreach (var alignment in _alignmentCatalog.ToDefinitions())
                 {
                     _alignments.Add(alignment);
@@ -656,9 +639,9 @@ namespace Eclipse_Library.UI
         {
             try
             {
-                var path = _catalogPathResolver.FindDocsFile("leveling.config.json");
-                _levelProgressionCatalog = LevelProgressionJson.LoadFromFile(path);
-                SetStatus($"Loaded leveling config from {path}.");
+                var result = _rulesCatalogStore.LoadLevelProgressionCatalog();
+                _levelProgressionCatalog = result.Catalog;
+                SetStatus($"Loaded leveling config from {result.Path}.");
             }
             catch (Exception ex)
             {
