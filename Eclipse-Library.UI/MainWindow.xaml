@@ -373,25 +373,30 @@
                                                                 </StackPanel>
                                                             </StackPanel>
 
-                                                            <TextBox Grid.Column="2"
-                                                                     Text="{Binding HpNote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Width="48"
-                                                                     Margin="0"
-                                                                     HorizontalContentAlignment="Center"
-                                                                     ToolTip="{Binding HpToolTip}">
-                                                                <TextBox.Style>
-                                                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                                                        <Setter Property="IsReadOnly" Value="False" />
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding IsFirstLevel}" Value="True">
-                                                                                <Setter Property="IsReadOnly" Value="True" />
-                                                                                <Setter Property="Background" Value="#E7DDC8" />
-                                                                                <Setter Property="Foreground" Value="#4F432F" />
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </TextBox.Style>
-                                                            </TextBox>
+                                                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                                                <TextBox Text="{Binding HpNote, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Width="48"
+                                                                         Margin="0"
+                                                                         HorizontalContentAlignment="Center"
+                                                                         ToolTip="{Binding HpToolTip}"
+                                                                         PreviewTextInput="HitPoints_PreviewTextInput">
+                                                                    <TextBox.Style>
+                                                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                                            <Setter Property="IsReadOnly" Value="{Binding IsHpReadOnly}" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsHpReadOnly}" Value="True">
+                                                                                    <Setter Property="Background" Value="#E7DDC8" />
+                                                                                    <Setter Property="Foreground" Value="#4F432F" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBox.Style>
+                                                                </TextBox>
+                                                                <TextBlock Text="{Binding HpRangeText}"
+                                                                           HorizontalAlignment="Center"
+                                                                           FontSize="10"
+                                                                           Foreground="#7B6A50" />
+                                                            </StackPanel>
 
                                                             <ComboBox Grid.Column="3"
                                                                       ItemsSource="{Binding FavoredBonusOptions}"

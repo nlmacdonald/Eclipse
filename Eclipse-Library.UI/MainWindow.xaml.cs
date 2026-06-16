@@ -374,6 +374,7 @@ namespace Eclipse_Library.UI
                 {
                     row.HpNote = savedLevel.HpNote;
                     row.FavoredBonus = savedLevel.FavoredBonus;
+                    row.SetFirstLevelMaxHitPoints(_heroSettings.MaxHpFirstLevel);
                     ConfigureFavoredBonusOptions(row);
                 }
             }
@@ -512,6 +513,10 @@ namespace Eclipse_Library.UI
             if (resetClassLevels)
             {
                 ResetCharacterBuild();
+            }
+            else
+            {
+                RefreshHitPointModeForClassLevels();
             }
 
             LoadTemplateLibrary();
@@ -2589,6 +2594,7 @@ namespace Eclipse_Library.UI
                 template.Source,
                 BuildTemplateDescription(template),
                 purchases);
+            classLevel.SetFirstLevelMaxHitPoints(_heroSettings.MaxHpFirstLevel);
             ConfigureFavoredBonusOptions(classLevel);
             classLevel.PropertyChanged += CharacterClassLevel_PropertyChanged;
             _classLevels.Add(classLevel);
@@ -2635,7 +2641,18 @@ namespace Eclipse_Library.UI
                     .Cast<TemplatePurchaseRow>()
                     .ToList());
                 ConfigureFavoredBonusOptions(_classLevels[i]);
+                _classLevels[i].SetFirstLevelMaxHitPoints(_heroSettings.MaxHpFirstLevel);
             }
+        }
+
+        private void RefreshHitPointModeForClassLevels()
+        {
+            foreach (var level in _classLevels)
+            {
+                level.SetFirstLevelMaxHitPoints(_heroSettings.MaxHpFirstLevel);
+            }
+
+            RefreshHitPointTotalFromClassLevels();
         }
 
         private void RefreshFavoredBonusOptionsForClassLevels()
@@ -2687,6 +2704,11 @@ namespace Eclipse_Library.UI
             RefreshAbilityScoreAdjustmentsSummary();
             RefreshAbilityScoreModifiers();
             RefreshCharacterBuild();
+        }
+
+        private void HitPoints_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = e.Text.Any(ch => !char.IsDigit(ch));
         }
 
         private void BackgroundInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -4222,6 +4244,7 @@ namespace Eclipse_Library.UI
         private string _hpNote = "";
         private string _favoredBonus = "";
         private bool _isFavoredBonusEnabled;
+        private bool _maxHpAtFirstLevel = true;
         private IReadOnlyList<string> _favoredBonusOptions = Array.Empty<string>();
         private IReadOnlyList<TemplatePurchaseRow> _purchases;
 
@@ -4241,7 +4264,7 @@ namespace Eclipse_Library.UI
             Source = source ?? "";
             ClassDescription = string.IsNullOrWhiteSpace(classDescription) ? TemplateName : classDescription;
             _purchases = purchases ?? Array.Empty<TemplatePurchaseRow>();
-            if (IsFirstLevel && MaxHitPoints > 0)
+            if (IsHpReadOnly)
             {
                 _hpNote = MaxHitPoints.ToString();
             }
@@ -4267,9 +4290,35 @@ namespace Eclipse_Library.UI
             }
         }
 
-        public string HpToolTip => IsFirstLevel
-            ? "First level hit points are fixed at the maximum allowed by the template hit die."
-            : "Hit points for this class level";
+        public bool IsHpReadOnly => IsFirstLevel && _maxHpAtFirstLevel && MaxHitPoints > 0;
+
+        public string HpRangeText
+        {
+            get
+            {
+                if (MaxHitPoints <= 0)
+                {
+                    return "";
+                }
+
+                return IsHpReadOnly ? $"fixed {MaxHitPoints}" : $"1-{MaxHitPoints}";
+            }
+        }
+
+        public string HpToolTip
+        {
+            get
+            {
+                if (MaxHitPoints <= 0)
+                {
+                    return "Hit points for this class level";
+                }
+
+                return IsHpReadOnly
+                    ? "First level hit points are fixed at the maximum allowed by the template hit die."
+                    : $"Rolled hit points for this class level. Enter a value from 1 to {MaxHitPoints}.";
+            }
+        }
 
         public string HitDieLabel
         {
@@ -4293,7 +4342,7 @@ namespace Eclipse_Library.UI
                 }
 
                 _characterLevel = value;
-                if (IsFirstLevel && MaxHitPoints > 0)
+                if (IsHpReadOnly)
                 {
                     _hpNote = MaxHitPoints.ToString();
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpNote)));
@@ -4301,6 +4350,8 @@ namespace Eclipse_Library.UI
 
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CharacterLevel)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFirstLevel)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHpReadOnly)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpRangeText)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpToolTip)));
             }
         }
@@ -4310,9 +4361,13 @@ namespace Eclipse_Library.UI
             get => _hpNote;
             set
             {
-                if (IsFirstLevel && MaxHitPoints > 0)
+                if (IsHpReadOnly)
                 {
                     value = MaxHitPoints.ToString();
+                }
+                else if (MaxHitPoints > 0 && int.TryParse(value, out var hitPoints))
+                {
+                    value = Math.Max(1, Math.Min(MaxHitPoints, hitPoints)).ToString();
                 }
 
                 value ??= "";
@@ -4404,10 +4459,28 @@ namespace Eclipse_Library.UI
             IsFavoredBonusEnabled = isEnabled;
         }
 
+        public void SetFirstLevelMaxHitPoints(bool maxHpAtFirstLevel)
+        {
+            if (_maxHpAtFirstLevel == maxHpAtFirstLevel)
+            {
+                return;
+            }
+
+            _maxHpAtFirstLevel = maxHpAtFirstLevel;
+            if (IsHpReadOnly)
+            {
+                HpNote = MaxHitPoints.ToString();
+            }
+
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHpReadOnly)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpRangeText)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpToolTip)));
+        }
+
         public void ReplacePurchases(IReadOnlyList<TemplatePurchaseRow> purchases)
         {
             _purchases = purchases ?? Array.Empty<TemplatePurchaseRow>();
-            if (IsFirstLevel && MaxHitPoints > 0)
+            if (IsHpReadOnly)
             {
                 _hpNote = MaxHitPoints.ToString();
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpNote)));
@@ -4416,6 +4489,8 @@ namespace Eclipse_Library.UI
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Purchases)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HitDieLabel)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaxHitPoints)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHpReadOnly)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpRangeText)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HpToolTip)));
         }
 
