@@ -2668,7 +2668,11 @@ namespace Eclipse_Library.UI
             var rulesetId = GetRulesetIdForTemplate(row.TemplateId) ?? _currentTemplate.RulesetId;
             var selectedRace = GetSelectedRaceDefinition();
             var rules = FavoredClassBonusRulesConfig.FromRace(rulesetId, selectedRace);
-            row.SetFavoredBonusOptions(rules.GetAllowedBonuses(row.TemplateName), rulesetId == RulesetId.Pathfinder1E);
+            var options = rules.GetAllowedBonuses(row.TemplateName);
+            row.SetFavoredBonusOptions(
+                options,
+                options.ToDictionary(x => x, x => rules.GetDescription(row.TemplateName, x), StringComparer.OrdinalIgnoreCase),
+                rulesetId == RulesetId.Pathfinder1E);
         }
 
         private RulesetId? GetRulesetIdForTemplate(Guid templateId)
@@ -4246,6 +4250,7 @@ namespace Eclipse_Library.UI
         private bool _isFavoredBonusEnabled;
         private bool _maxHpAtFirstLevel = true;
         private IReadOnlyList<string> _favoredBonusOptions = Array.Empty<string>();
+        private IReadOnlyDictionary<string, string> _favoredBonusDescriptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private IReadOnlyList<TemplatePurchaseRow> _purchases;
 
         public CharacterClassLevelRow(
@@ -4394,6 +4399,24 @@ namespace Eclipse_Library.UI
 
                 _favoredBonus = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoredBonus)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoredBonusDescription)));
+            }
+        }
+
+        public string FavoredBonusDescription
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(_favoredBonus))
+                {
+                    return "";
+                }
+
+                return _favoredBonusDescriptions.TryGetValue(_favoredBonus, out var description)
+                    ? description
+                    : SetClassLevelDetailsPurchase.IsCustomFavoredBonus(_favoredBonus)
+                        ? "Custom favored class bonus note."
+                        : "";
             }
         }
 
@@ -4422,8 +4445,12 @@ namespace Eclipse_Library.UI
             }
         }
 
-        public void SetFavoredBonusOptions(IReadOnlyList<string> options, bool isEnabled)
+        public void SetFavoredBonusOptions(
+            IReadOnlyList<string> options,
+            IReadOnlyDictionary<string, string> descriptions,
+            bool isEnabled)
         {
+            _favoredBonusDescriptions = descriptions ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var normalized = (options ?? Array.Empty<string>())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x.Trim())
@@ -4457,6 +4484,7 @@ namespace Eclipse_Library.UI
             }
 
             IsFavoredBonusEnabled = isEnabled;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FavoredBonusDescription)));
         }
 
         public void SetFirstLevelMaxHitPoints(bool maxHpAtFirstLevel)

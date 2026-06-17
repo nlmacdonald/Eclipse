@@ -130,6 +130,13 @@
                                                            "Terran",
                                                            "Undercommon"
                                                        ],
+                                    "favoredClassBonuses":  [
+                                                               {
+                                                                   "className":  "Fighter",
+                                                                   "bonus":  "+1 CMD vs bull rush or trip",
+                                                                   "description":  "Add +1 to the dwarf fighter's CMD when resisting a bull rush or trip."
+                                                               }
+                                                           ],
                                     "abilities":  [
                                                       {
                                                           "abilityId":  "movement-speed",
@@ -260,6 +267,13 @@
                                     "automaticLanguages":  [
                                                                "Common",
                                                                "Elven"
+                                                           ],
+                                    "favoredClassBonuses":  [
+                                                               {
+                                                                   "className":  "Wizard",
+                                                                   "bonus":  "+1/2 arcane school power use",
+                                                                   "description":  "Add 1/2 use per day to one 1st-level arcane school power normally usable 3 + Intelligence modifier times per day."
+                                                               }
                                                            ],
                                     "abilities":  [
                                                       {
@@ -827,6 +841,13 @@
                                                                       "choose":  true
                                                                   }
                                                               ],
+                                    "favoredClassBonuses":  [
+                                                               {
+                                                                   "className":  "Rogue",
+                                                                   "bonus":  "+1/6 rogue talent",
+                                                                   "description":  "Add 1/6 of a rogue talent."
+                                                               }
+                                                           ],
                                     "abilities":  [
                                                       {
                                                           "abilityId":  "movement-speed",

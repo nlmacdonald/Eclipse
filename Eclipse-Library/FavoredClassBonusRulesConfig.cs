@@ -12,6 +12,12 @@ namespace Eclipse_Library
             "+1 Skill Point",
         };
 
+        private static readonly Dictionary<string, string> PathfinderCommonDescriptions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["+1 Hit Point"] = "Add 1 hit point for this class level.",
+            ["+1 Skill Point"] = "Add 1 skill point for this class level.",
+        };
+
         public RulesetId RulesetId { get; set; } = RulesetId.Dnd35;
         public string RaceName { get; set; } = "";
         public List<FavoredClassBonusOptionDocument> Options { get; } = new();
@@ -58,6 +64,27 @@ namespace Eclipse_Library
             }
 
             return bonuses;
+        }
+
+        public string GetDescription(string className, string bonus)
+        {
+            var normalized = Normalize(bonus);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return "";
+            }
+
+            var specific = Options.FirstOrDefault(x =>
+                AppliesToClass(x, className)
+                && string.Equals(Normalize(x.Bonus), normalized, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(specific?.Description))
+            {
+                return specific.Description!.Trim();
+            }
+
+            return PathfinderCommonDescriptions.TryGetValue(normalized, out var description)
+                ? description
+                : "";
         }
 
         public bool IsAllowed(string className, string favoredBonus)
